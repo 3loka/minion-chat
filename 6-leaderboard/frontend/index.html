@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+</head>
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse; /* Ensures no gaps between borders */
+    }
+    th, td {
+        border: 1px solid #ddd; /* Adds borders to table cells */
+        text-align: center; /* Centers text in cells */
+        padding: 8px;
+        width: 1%; /* Ensures all columns take equal width */
+    }
+    th {
+        background-color: #f4f4f4; /* Header background color */
+    }
+</style>
+<body style="display: flex;
+             flex-direction: column;
+             justify-content: center;
+             align-items: center;
+             height: 100%;
+             width: 100%">
+<h1>Leaderboard</h1>
+<table id="leaderboard-container" style="width: 100%; height: 100%;
+    margin: auto;">
+    <thead style="text-align: center">
+    <tr>
+        <td>
+            User
+        </td>
+        <td>
+            Stages Cleared
+        </td>
+        <td>
+            Total Time
+        </td>
+    </thead>
+    <tbody id="leaderboard" style="text-align: center">
+
+    </tbody>
+</table>
+
+<script>
+    const API_URL = "http://localhost:3000";
+
+    setInterval(async function () {
+        const response = await fetch(`${API_URL}/leaderboard`);
+        const leaderboard = await response.json();
+        const leaderboardList = document.getElementById("leaderboard");
+
+        const rows = await Promise.all(
+            leaderboard.map(async (entry) => {
+                return `<tr>
+        <td>
+          ${entry.user}
+        </td>
+        <td>${entry.unique_games}</td>
+        <td>${entry.min_total_score}</td>
+      </tr>`;
+            })
+        );
+
+        // Update the leaderboard list with all rows
+        leaderboardList.innerHTML = rows.join("");
+    }, 1000);
+
+</script>
+</body>
+</html>
