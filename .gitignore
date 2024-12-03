@@ -55,6 +55,7 @@ npm-debug.log
 yarn-error.log
 yarn-debug.log*
 
+6-leadboard/backend/node_modules
 # 2 Terraform
 2-terraform/.terraform
 2-terraform/terraform.tfstate
