@@ -3,22 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	_ "io/ioutil"
 	"log"
 	"net/http"
-	"os"
 )
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
-	// Get ResponseService address from Consul
-	responseServiceAddr, err := getServiceAddress("response-service")
-	if err != nil {
-		http.Error(w, "Failed to get ResponseService address", http.StatusInternalServerError)
-		return
-	}
-
-	// Call ResponseService
-	resp, err := http.Get(fmt.Sprintf("http://%s/response", responseServiceAddr))
+	resp, err := http.Get("http://response-service.service.consul:5001/response") // Static URL
 	if err != nil {
 		http.Error(w, "Failed to contact ResponseService", http.StatusInternalServerError)
 		return
@@ -29,31 +19,8 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(resp.Body).Decode(&response)
 
 	response["message"] = "Hello from HelloService!"
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
-}
-
-func getServiceAddress(serviceName string) (string, error) {
-	consulAddr := os.Getenv("CONSUL_HTTP_ADDR")
-	resp, err := http.Get(fmt.Sprintf("http://%s/v1/catalog/service/%s", consulAddr, serviceName))
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	var services []struct {
-		ServiceAddress string `json:"ServiceAddress"`
-		ServicePort    int    `json:"ServicePort"`
-	}
-
-	json.NewDecoder(resp.Body).Decode(&services)
-
-	if len(services) == 0 {
-		return "", fmt.Errorf("no instances of service %s found", serviceName)
-	}
-
-	return fmt.Sprintf("%s:%d", services[0].ServiceAddress, services[0].ServicePort), nil
 }
 
 func main() {

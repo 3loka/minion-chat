@@ -1,9 +1,14 @@
-
 job "response-service" {
   datacenters = ["dc1"]
 
   group "response-group" {
+    count = 1
+    
     network {
+    dns {
+    	servers = ["172.17.0.1"]
+     }
+      mode = "bridge"
       port "http" {
         static = 5001
       }
@@ -13,7 +18,7 @@ job "response-service" {
       driver = "docker"
 
       config {
-        image = "your_dockerhub_username/responseservice:latest"
+        image = "srahul3/responseservice:latest"
         ports = ["http"]
       }
 
@@ -23,7 +28,7 @@ job "response-service" {
 
         check {
           type     = "http"
-          path     = "/health"
+          path     = "/response"
           interval = "10s"
           timeout  = "2s"
         }
