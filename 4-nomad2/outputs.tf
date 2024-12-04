@@ -10,6 +10,17 @@
 #     CONFIGURATION
 # }
 
+output "private_ip" {
+    value = <<CONFIGURATION
+    # Nomad server
+    ${aws_instance.noamd_server.private_ip},
+
+    # Nomad client
+    ${aws_instance.nomad_client[0].private_ip},
+    ${aws_instance.nomad_client[1].private_ip}
+    CONFIGURATION
+}
+
 output "instance_ids" {
     value = <<CONFIGURATION
     ${aws_instance.nomad_client[0].id},
@@ -30,9 +41,8 @@ output "ssh" {
 
 output "ui_urls" {
   value = <<CONFIGURATION
-    http://${aws_instance.noamd_server.public_ip}:8500
-    http://${aws_instance.noamd_server.public_ip}:4646
-    http://${aws_instance.noamd_server.public_ip}:8200
+    Consul: http://${aws_instance.noamd_server.public_ip}:8500
+    Nomad: http://${aws_instance.noamd_server.public_ip}:4646
     CONFIGURATION
 }
 

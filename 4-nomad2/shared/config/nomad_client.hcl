@@ -9,7 +9,9 @@ client {
     "driver.raw_exec.enable"    = "1"
     "docker.privileged.enabled" = "true"
   }
-  servers = ["consul.service.consul"]
+  servers = ["CONSUL_SERVER_IP"]
+  cni_path = "opt/cni/bin"
+  cni_config_dir = "opt/cni/config"
 }
 
 acl {

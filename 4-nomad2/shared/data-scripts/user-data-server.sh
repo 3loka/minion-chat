@@ -17,11 +17,10 @@ sed -i "s/IP_ADDRESS/$PRIVATE_IP/g" /etc/consul.d/consul.hcl
 sed -i "s/SERVER_COUNT/${server_count}/g" /etc/consul.d/consul.hcl
 
 sed -i "s/IP_ADDRESS/$PRIVATE_IP/g" /etc/nomad.d/nomad.hcl
-sed -i "s/IP_ADDRESS/$PRIVATE_IP/g" /etc/vault.d/vault.hcl
 
 sudo systemctl restart consul.service
+sudo systemctl enable nomad.service
 sudo systemctl restart nomad.service
-sudo systemctl restart vault.service
 
 wait 10
 

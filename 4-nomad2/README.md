@@ -18,7 +18,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 
 1. **Navigate to the Part 2 directory**:
    ```bash
-   cd 3-consul2
+   cd 4-nomad
    ```
 
 2. **Building AMI using Packer**
@@ -38,7 +38,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    dockerhub_id              = "srahul3"
 
    # Terraform variables (all are required)
-   ami                       = "ami-03c83c7b2955a1b4b"
+   ami                       = "<your-ami-from-previous-step>"
 
    name_prefix               = "minion"
    response_service_count    = 2
@@ -49,11 +49,63 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    terraform init
    terraform apply -var-file=variables.hcl
    ```
+   Response
+   ```
+   Outputs:
+
+   instance_ids = <<EOT
+      i-04bdda5b8fb6acb37,
+      i-06b5c92a418169db2
+
+   EOT
+   private_ip = <<EOT
+      # Nomad server
+      172.31.25.61,
+
+      # Nomad client
+      172.31.16.189,
+      172.31.29.204
+
+   EOT
+   ssh = <<EOT
+      # Nomad server
+      ssh -i "minion-key.pem" ubuntu@23.22.218.131
+
+      # Nomad client
+      ssh -i "minion-key.pem" ubuntu@3.94.166.246
+      ssh -i "minion-key.pem" ubuntu@34.229.194.154
+
+   EOT
+   ui_urls = <<EOT
+      Consul Server: http://23.22.218.131:8500
+      Nomad Server: http://23.22.218.131:4646
+   EOT
+   ```
+4. **Testing Servers**:
+   - Make sure Consul UI and Nomad UI and loading
+   - Make sure Nomad shows two client
+   - Make sure Consul services are healthy
+
+5. **Adding Minion phrase ion Consul KV**
+
+   SSH into first Nomad client and run below command(s)
+
+   Verify the docker bridge ip by running below command
+   ```sh
+   ip -brief addr show docker0 | awk '{print $3}' | awk -F/ '{print $1}'
+   ```
+
+   :warning: Warning: If you see the result of above command other than `172.17.0.1`, then update that IP in nomad jobs.
+
+   ```sh
+   curl --request PUT --data '["Bello!", "Poopaye!", "Tulaliloo ti amo!"]' http://consul.service.consul:8500/v1/kv/minion_phrases
+   ```
+
 
 4. **Test the Services**:
    - Test **HelloService**:
      ```bash
-     curl http://localhost:5000/hello | jq
+     curl http://<ip-of-nomad-client>:5000/hello | jq
      ```
    - Expected Response:
      ```json
@@ -64,7 +116,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
          "Poopaye!",
          "Tulaliloo ti amo!"
       ],
-      "response_message": "Bello from ResponseService i-05506b6e36d25223a!"
+      "response_message": "Bello from ResponseService"
      }
      ```
 
@@ -86,10 +138,9 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
       "minion_phrases": [
          "Bello!",
          "Poopaye!",
-         "Tulaliloo ti amo!",
-         "jello"
+         "Tulaliloo ti amo!"
       ],
-      "response_message": "Bello from ResponseService i-05506b6e36d25223a!"
+      "response_message": "Bello from ResponseService"
       }
 
       sudo docker pause response-service
@@ -101,8 +152,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
       "minion_phrases": [
          "Bello!",
          "Poopaye!",
-         "Tulaliloo ti amo!",
-         "jello"
+         "Tulaliloo ti amo!"
       ],
       "response_message": "Bello from ResponseService i-0a5e388ad2762ec84!"
       }
@@ -116,8 +166,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
       "minion_phrases": [
          "Bello!",
          "Poopaye!",
-         "Tulaliloo ti amo!",
-         "jello"
+         "Tulaliloo ti amo!"
       ],
       "response_message": "Bello from ResponseService i-05506b6e36d25223a!"
       }
@@ -128,4 +177,5 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 ## Key Points
 - Dynamic service discovery: HelloService resolves ResponseService using Consul.
 - Centralized configuration via KV store.
-- Fault tollerant via consul circuit breaker
+- Application lifecycle maangement and effective utilization of resources
+- Fault tollerant

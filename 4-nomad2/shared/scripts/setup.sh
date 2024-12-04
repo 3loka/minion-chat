@@ -14,8 +14,7 @@ cd /ops
 
 CONFIGDIR=/ops/shared/config
 CONSULVERSION=1.18.2
-VAULTVERSION=1.17.0
-NOMADVERSION=1.8.1
+NOMADVERSION=1.9.3
 
 sudo apt-get install -y software-properties-common
 
@@ -34,12 +33,6 @@ sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/${di
 sudo apt-get update
 sudo apt-get install -y docker-ce
 
-# Java is rquired for nomad
-sudo add-apt-repository -y ppa:openjdk-r/ppa
-sudo apt-get update 
-sudo apt-get install -y openjdk-8-jdk
-JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
-
 # Install HashiCorp Apt Repository
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
@@ -54,8 +47,7 @@ echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://
 # Install HashiStack Packages
 sudo apt-get update && sudo apt-get -y install \
 	consul=$CONSULVERSION* \
-	nomad=$NOMADVERSION* \
-	vault=$VAULTVERSION*
+	nomad=$NOMADVERSION*
 
-sudo docker image pull $DOCKERHUB_ID/helloservice:latest
-sudo docker image pull $DOCKERHUB_ID/responseservice:latest
+# sudo docker image pull $DOCKERHUB_ID/helloservice:latest
+# sudo docker image pull $DOCKERHUB_ID/responseservice:latest
