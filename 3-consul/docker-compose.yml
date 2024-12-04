@@ -1,14 +1,14 @@
 services:
   hello-service:
-    image: your_dockerhub_username/helloservice:latest
+    image: ${TF_VAR_dockerhub_id}/helloservice:latest
     container_name: helloservice
     build: ./HelloService
     environment:
       RESPONSE_SERVICE_HOST: responseservice
     ports:
-      - "5000:5000"
+      - "9999:5000"
   response-service:
-    image: your_dockerhub_username/responseservice:latest
+    image: ${TF_VAR_dockerhub_id}/responseservice:latest
     container_name: responseservice
     build: ./ResponseService
     ports:

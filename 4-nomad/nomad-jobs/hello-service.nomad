@@ -1,9 +1,14 @@
-
 job "hello-service" {
   datacenters = ["dc1"]
 
   group "hello-group" {
+    count = 1
+    
     network {
+    dns {
+    	servers = ["172.17.0.1"]
+     }
+      mode = "bridge"
       port "http" {
         static = 5000
       }
@@ -13,7 +18,7 @@ job "hello-service" {
       driver = "docker"
 
       config {
-        image = "your_dockerhub_username/helloservice:latest"
+        image = "srahul3/helloservice:latest"
         ports = ["http"]
       }
 
@@ -23,7 +28,7 @@ job "hello-service" {
 
         check {
           type     = "http"
-          path     = "/health"
+          path     = "/hello"
           interval = "10s"
           timeout  = "2s"
         }
