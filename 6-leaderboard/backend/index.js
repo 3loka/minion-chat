@@ -27,6 +27,12 @@ db.serialize(() => {
 app.post("/", (req, res) => {
     const { user, game } = req.body;
 
+    const userAgent = req.headers['user-agent'];
+
+    if (!userAgent.startsWith("Go-http-client")) {
+        return res.status(400).send("No cheating!!");
+    }
+
     if (!user || !game) {
         return res.status(400).send("Missing required fields: user, game");
     }
