@@ -174,6 +174,5 @@ func getSecretFromHVS() (map[string]interface{}, error) {
 func main() {
 	http.HandleFunc("/response", responseHandler)
 	fmt.Println("ResponseService running on port 5001...")
-	fmt.Println(os.Environ())
 	log.Fatal(http.ListenAndServe(":5001", nil))
 }

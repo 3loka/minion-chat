@@ -80,6 +80,14 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    terraform init
    terraform apply -var-file=variables.hcl
    ```
+   
+   **Create a secret in HVS**
+   ```bash
+   hcp vault-secrets apps create minion-app
+   echo 'is bruce wayne' >> secret
+   hcp vault-secrets secrets create batman --app=minion-app --data-file=- < secret
+   hcp vault-secrets secrets open batman
+   ```
 
 7. **Test the Services**:
    - Test **HelloService**:

@@ -2,8 +2,6 @@ provider "aws" {
   region = var.region
 }
 
-provider "hcp" {}
-
 #1.  Add a new EC2 instance for Consul.
 #2.  Modify HelloService and ResponseService to include Consul configuration.
 
@@ -176,6 +174,10 @@ resource "aws_instance" "response_service" {
     application_name          = "response-service"
     application_health_ep     = "response"
     dockerhub_id              = var.dockerhub_id
+    hcp_client_id             = var.hcp_client_id
+    hcp_client_secret         = var.hcp_client_secret
+    hcp_organization_id       = var.hcp_organization_id
+    hcp_project_id            = var.hcp_project_id
   })
 
   vpc_security_group_ids = [aws_security_group.consul_ui_ingress.id]
@@ -235,7 +237,7 @@ resource "tls_private_key" "pk" {
 }
 
 resource "aws_key_pair" "minion-key" {
-  key_name   = "minion-key"
+  key_name   = "minion-key-pair"
   public_key = tls_private_key.pk.public_key_openssh
 }
 
@@ -243,48 +245,4 @@ resource "local_file" "minion-key" {
   content         = tls_private_key.pk.private_key_pem
   filename        = "./minion-key.pem"
   file_permission = "0400"
-}
-
-resource "hcp_vault_secrets_app" "minion-app" {
-  app_name    = "minion-app"
-  description = "My minion app!"
-}
-
-# this has some bug so directly using API call
-# resource "hcp_vault_secrets_secret" "minion-secret-hvs" {
-#   depends_on = [hcp_vault_secrets_app.minion-app]
-#   app_name     = hcp_vault_secrets_app.minion-app.app_name
-#   secret_name  = "minion_secret"
-#   secret_value = var.dockerhub_id
-# }
-
-# Obtain HCP OAuth Token
-resource "null_resource" "hcp_auth_token" {
-  provisioner "local-exec" {
-    command = <<EOT
-      curl --location "https://auth.idp.hashicorp.com/oauth2/token" \
-        --header "Content-Type: application/x-www-form-urlencoded" \
-        --data-urlencode "client_id=${var.hcp_client_id}" \
-        --data-urlencode "client_secret=${var.hcp_client_secret}" \
-        --data-urlencode "grant_type=client_credentials" \
-        --data-urlencode "audience=https://api.hashicorp.cloud" | jq -r .access_token >> token.txt
-    EOT
-  }
-
-  triggers = {
-    client_id     = var.hcp_client_id
-    client_secret = var.hcp_client_secret
-  }
-}
-
-resource "null_resource" "minion-app-secret-kv" {
-  provisioner "local-exec" {
-    command = <<EOT
-      curl --request POST \
-        --url "https://api.cloud.hashicorp.com/secrets/2023-11-28/organizations/${var.hcp_organization_id}/projects/${var.hcp_project_id}/apps/${hcp_vault_secrets_app.minion-app.app_name}/secret/kv" \
-        --header "Content-Type: application/json" \
-        --header "Authorization: Bearer $(cat token.txt)" \
-        --data '{"name": "minion_secret", "value": "${var.dockerhub_id}"}'
-    EOT
-  }
 }

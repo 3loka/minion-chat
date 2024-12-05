@@ -3,7 +3,7 @@ region                    = "us-east-1"
 dockerhub_id              = "absolutelightning"
 
 # Terraform variables (all are required)
-ami                       = "ami-02b8ce7ffa9bc5e15"
+ami                       = "ami-0155fef1196ba8b60"
 
 name_prefix               = "minion"
 response_service_count    = 2
