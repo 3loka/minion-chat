@@ -13,6 +13,8 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    - An AWS account with access keys configured.
 3. **Docker Images**
    - Docker images compiled in last activity and available on docker-hub
+4 **HCP CLI**
+   - Install hcp cli - https://developer.hashicorp.com/hcp/docs/cli/install
 
 ## Steps to Run
 
