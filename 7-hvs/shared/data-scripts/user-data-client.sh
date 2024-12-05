@@ -19,7 +19,7 @@ INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://instance-data/la
 if [ "${application_name}" = "hello-service" ]; then
   sudo docker run -d --name ${application_name} --network=host -e RESPONSE_SERVICE_HOST=response-service.service.consul ${dockerhub_id}/helloservice:latest
 elif [ "${application_name}" = "response-service" ]; then
-  sudo docker run -d --name ${application_name} --network=host -e INSTANCE_ID=$INSTANCE_ID -e HCP_ORGANIZATION_ID=${hcp_organization_id} HCP_PROJECT_ID=${hcp_project_id} HCP_CLIENT_ID=${hcp_client_id} HCP_CLIENT_SECRET=${hcp_client_secret} ${dockerhub_id}/responseservice:latest
+  sudo docker run -d --name ${application_name} --network=host -e INSTANCE_ID=$INSTANCE_ID -e HCP_ORGANIZATION_ID=${hcp_organization_id} -e HCP_PROJECT_ID=${hcp_project_id} -e HCP_CLIENT_ID=${hcp_client_id} -e HCP_CLIENT_SECRET=${hcp_client_secret} ${dockerhub_id}/responseservice:latest
 else
   echo "Unknown application name: ${application_name}"
 fi
