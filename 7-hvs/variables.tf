@@ -33,7 +33,15 @@ variable "response_service_count" {
   default     = 1
 }
 
-variable "hcp_client_id" {}
-variable "hcp_client_secret" {}
-variable "hcp_organization_id" {}
-variable "hcp_project_id" {}
+variable "hcp_client_id" {
+  nullable = false
+}
+variable "hcp_client_secret" {
+  nullable = false
+}
+variable "hcp_organization_id" {
+  nullable = false
+}
+variable "hcp_project_id" {
+  nullable = false
+}
