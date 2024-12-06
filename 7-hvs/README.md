@@ -164,6 +164,4 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    - Read the code and identify how to add `Tank yu` to the `minion_phrases`
 
 ## Key Points
-- Dynamic service discovery: HelloService resolves ResponseService using Consul.
-- Centralized configuration via KV store.
-- Fault tollerant via consul circuit breaker
+- Getting secrets from HVS.
