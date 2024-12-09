@@ -59,14 +59,6 @@ scrape_configs:
 
     metrics_path: /metrics
 
-    - job_name: 'responseservice'
-
-    consul_sd_configs:
-    - server: '{{ env "NOMAD_IP_prometheus_ui" }}:5001'
-      services: ['response']
-
-    metrics_path: /metrics
-
 EOH
       }
 
