@@ -1,5 +1,5 @@
 
-# Part 3: Consul Integration
+# Part 7: HVS Integration
 
 ## Overview
 This part introduces Consul for service discovery, and fault tollerance for HelloService and ResponseService.
@@ -62,7 +62,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    ```hcl
    # Packer variables (all are required)
    region                    = "us-east-1"
-   dockerhub_id              = "srahul3"
+   dockerhub_id              = "<your-dockerhub-id>"
 
    # Terraform variables (all are required)
    ami                       = "<your-ami-from-previous-step>"
