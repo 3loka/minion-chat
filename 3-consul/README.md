@@ -6,9 +6,9 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 
 ## Prerequisites
 1. **Tools Installed**:
-   - Terraform CLI - [Installation Guide](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
+   - Terraform CLI
    - jq cli `brew install jq`
-   - Packer cli - [Installation Guide](https://developer.hashicorp.com/packer/tutorials/docker-get-started/get-started-install-cli)
+   - Packer cli
 2. **Packer generated AMI** (Pre-baked AMI with Consul Server, Consul Client, Docker Images, DNS Configuration):
    - An AWS account with access keys configured.
 3. **Docker Images**

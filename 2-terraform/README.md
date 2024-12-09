@@ -13,7 +13,7 @@ for service discovery or Nomad for orchestration.
 
 ## Prerequisites
 1. **Tools Installed**:
-   - Terraform CLI - [Installation Guide](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
+   - Terraform CLI
    - jq cli `brew install jq`
 2. **AWS Setup** (For AWS deployment):
    - An AWS account with access keys configured.
