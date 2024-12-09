@@ -13,7 +13,7 @@ for service discovery or Nomad for orchestration.
 
 ## Prerequisites
 1. **Tools Installed**:
-   - Docker and Docker Compose(For local setup)
+   - Docker and Docker Compose(For local setup) - [Installation Guide](https://docs.docker.com/desktop/?_gl=1*2e29n*_gcl_au*MTUzMTk2ODMzMi4xNzMxMzM3NjM0*_ga*MTg3Mjc5MjUxNC4xNzMxMzM3NjM0*_ga_XJWPQMJYHQ*MTczMzcyNzIyMy4zLjEuMTczMzcyNzI1MS4zMi4wLjA.)
    - jq cli `brew install jq`
 
 ---

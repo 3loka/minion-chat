@@ -1,6 +1,6 @@
 # Packer variables (all are required)
 region                    = "us-east-1"
-dockerhub_id              = "absolutelightning"
+dockerhub_id              = "<your-dockerhub-id>"
 
 # Terraform variables (all are required)
 ami                       = "ami-0155fef1196ba8b60"

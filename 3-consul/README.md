@@ -6,9 +6,9 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 
 ## Prerequisites
 1. **Tools Installed**:
-   - Terraform CLI
+   - Terraform CLI - [Installation Guide](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
    - jq cli `brew install jq`
-   - Packer cli
+   - Packer cli - [Installation Guide](https://developer.hashicorp.com/packer/tutorials/docker-get-started/get-started-install-cli)
 2. **Packer generated AMI** (Pre-baked AMI with Consul Server, Consul Client, Docker Images, DNS Configuration):
    - An AWS account with access keys configured.
 3. **Docker Images**
@@ -56,11 +56,11 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 
 6. **Deloyment**
    
-   **Update variables.hcl acordingly. Sepecially the `ami`**
+   **Update variables.hcl acordingly. Especially the `ami`**
    ```hcl
    # Packer variables (all are required)
    region                    = "us-east-1"
-   dockerhub_id              = "srahul3"
+   dockerhub_id              = "<your-dockerhub-id>"
 
    # Terraform variables (all are required)
    ami                       = "<your-ami-from-previous-step>"
