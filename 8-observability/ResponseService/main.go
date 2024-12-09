@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,10 +11,17 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
-	// Define Prometheus metrics
+	// Prometheus metrics
 	totalRequests = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Name: "response_service_total_requests",
@@ -39,29 +47,68 @@ var (
 			Buckets: prometheus.DefBuckets,
 		},
 	)
+	tracer trace.Tracer
 )
 
 func init() {
-	// Register metrics with Prometheus
+	// Register Prometheus metrics
 	prometheus.MustRegister(totalRequests)
 	prometheus.MustRegister(successfulResponses)
 	prometheus.MustRegister(failedResponses)
 	prometheus.MustRegister(requestDuration)
 }
 
+func initTracer() {
+	ctx := context.Background()
+
+	// Create an OTLP HTTP exporter
+	exporter, err := otlptracehttp.New(ctx)
+	if err != nil {
+		log.Fatalf("Failed to create OTLP trace exporter: %v", err)
+	}
+
+	// Create a resource with service name and other metadata
+	res, err := resource.New(ctx,
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String("response-service"),
+		),
+	)
+	if err != nil {
+		log.Fatalf("Failed to create resource: %v", err)
+	}
+
+	// Create a tracer provider with the OTLP exporter and resource
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(res),
+	)
+
+	// Register the tracer provider globally
+	otel.SetTracerProvider(tp)
+
+	// Set the tracer
+	tracer = otel.Tracer("response-service")
+}
+
 func responseHandler(w http.ResponseWriter, r *http.Request) {
-	totalRequests.Inc() // Increment the total requests counter
+	totalRequests.Inc() // Increment total requests
 
 	// Start measuring request duration
 	timer := prometheus.NewTimer(requestDuration)
 	defer timer.ObserveDuration()
 
+	// Start OpenTelemetry span
+	ctx, span := tracer.Start(r.Context(), "responseHandler")
+	defer span.End()
+
 	// Fetch Minion phrases from Consul KV
-	phrases, err := getMinionPhrases()
+	phrases, err := getMinionPhrases(ctx)
 	var response map[string]interface{}
 	if err != nil {
 		log.Printf("Minion phrases fetch failed: %v", err)
-		failedResponses.Inc() // Increment failed responses counter
+		failedResponses.Inc() // Increment failed responses
+		span.RecordError(err)
+		span.SetAttributes(semconv.HTTPStatusCodeKey.Int(http.StatusInternalServerError))
 		response = map[string]interface{}{
 			"response_message": "Bello from ResponseService!",
 		}
@@ -72,26 +119,32 @@ func responseHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Add instance ID to response if available
 	if instanceID := os.Getenv("INSTANCE_ID"); instanceID != "" {
 		response["response_message"] = fmt.Sprintf("Bello from ResponseService %s!", instanceID)
 	}
 
-	successfulResponses.Inc() // Increment successful responses counter
+	successfulResponses.Inc() // Increment successful responses
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+
+	// Add HTTP status code to the span
+	span.SetAttributes(semconv.HTTPStatusCodeKey.Int(http.StatusOK))
 }
 
-func getMinionPhrases() ([]string, error) {
-	resp, err := http.Get("http://consul.service.consul:8500/v1/kv/minion_phrases?raw")
+func getMinionPhrases(ctx context.Context) ([]string, error) {
+	// Use OpenTelemetry instrumentation for HTTP client
+	client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
+	req, _ := http.NewRequestWithContext(ctx, "GET", "http://consul.service.consul:8500/v1/kv/minion_phrases?raw", nil)
+	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Failed to fetch Minion phrases from kv store: %v", err)
+		log.Printf("Failed to fetch Minion phrases: %v", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Unexpected status code: %d", resp.StatusCode)
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
@@ -112,9 +165,12 @@ func getMinionPhrases() ([]string, error) {
 }
 
 func main() {
+	initTracer() // Initialize OpenTelemetry tracing
+
 	// Register Prometheus metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())
 
+	// Register response handler
 	http.HandleFunc("/response", responseHandler)
 
 	fmt.Println("ResponseService running on port 5001...")
