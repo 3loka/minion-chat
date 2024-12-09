@@ -13,6 +13,8 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    - An AWS account with access keys configured.
 3. **Docker Images**
    - Docker images compiled in last activity and available on docker-hub
+4 **HCP CLI**
+   - Install hcp cli - https://developer.hashicorp.com/hcp/docs/cli/install
 
 ## Steps to Run
 
@@ -162,6 +164,4 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    - Read the code and identify how to add `Tank yu` to the `minion_phrases`
 
 ## Key Points
-- Dynamic service discovery: HelloService resolves ResponseService using Consul.
-- Centralized configuration via KV store.
-- Fault tollerant via consul circuit breaker
+- Getting secrets from HVS.
