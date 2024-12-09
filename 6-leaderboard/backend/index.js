@@ -23,7 +23,7 @@ db.serialize(() => {
 
 // API Endpoints
 
-const validGames = ['vault', 'consul', 'nomad', 'terraform', 'hvs']
+const validGames = ['vault', 'consul', 'nomad', 'terraform', 'hvs', 'boundary']
 
 // Update leaderboard by adding a score
 app.post("/", (req, res) => {
