@@ -55,11 +55,15 @@ The primary goal of this workshop is to equip developers with the knowledge of w
     brew install jq
     ```
 5. **DockerHub account**
-    - Ensure you are able to authorize yourself to dockerhub using CLI
+    - Ensure you are able to authorize yourself to dockerhub using CLI.
+    - Keep your DockerHub id handy.
 
     ```bash
     docker login
     ```
     Make sure you recieve this message `Login Succeeded`
 
+6. **Docker and Docker Compose CLI**
+
+    - Docker and Docker Compose CLI - [Installation Guide](https://docs.docker.com/desktop/?_gl=1*2e29n*_gcl_au*MTUzMTk2ODMzMi4xNzMxMzM3NjM0*_ga*MTg3Mjc5MjUxNC4xNzMxMzM3NjM0*_ga_XJWPQMJYHQ*MTczMzcyNzIyMy4zLjEuMTczMzcyNzI1MS4zMi4wLjA.)
 ---
