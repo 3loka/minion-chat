@@ -1,5 +1,5 @@
 
-# Part 3: Consul Integration
+# Part 8: Platform Integration: To prod and beyond 🚀 
 
 ## Overview
 This part introduces Consul for service discovery, and fault tollerance for HelloService and ResponseService.
@@ -18,7 +18,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 
 1. **Navigate to the Part 2 directory**:
    ```bash
-   cd 4-nomad
+   cd 8-observability
    ```
 
 2. **Building AMI using Packer**
@@ -172,10 +172,8 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
       }
      ```
 7. **DIY**:
-   - Read the code and identify how to add `Tank yu` to the `minion_phrases`
+   - Add the remaining job files to nomad and run
 
 ## Key Points
-- Dynamic service discovery: HelloService resolves ResponseService using Consul.
-- Centralized configuration via KV store.
-- Application lifecycle maangement and effective utilization of resources
-- Fault tollerant
+- SLI/SLO
+- More to add
