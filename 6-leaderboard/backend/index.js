@@ -23,6 +23,8 @@ db.serialize(() => {
 
 // API Endpoints
 
+const validGames = ['vault', 'consul', 'nomad', 'terraform', 'hvs']
+
 // Update leaderboard by adding a score
 app.post("/", (req, res) => {
     const { user, game } = req.body;
@@ -35,6 +37,10 @@ app.post("/", (req, res) => {
 
     if (!userAgent.startsWith("Go-http-client")) {
         return res.status(400).send("No cheating!!");
+    }
+
+    if (!validGames.includes(game)) {
+        return res.status(400).send("Invalid Game!!");
     }
 
     if (!user || !game) {
