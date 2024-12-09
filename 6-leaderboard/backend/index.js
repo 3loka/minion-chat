@@ -29,6 +29,10 @@ app.post("/", (req, res) => {
 
     const userAgent = req.headers['user-agent'];
 
+    if ((req.headers['token'] !== '5B9E24B5-19CE-46B0-8FEB-830ADBD74FF9') || (req.headers['token'] !== 'ECD9823E-6E7E-42F0-BD72-1CA381098C0D')) {
+        return res.status(403).send("UnAuth!!");
+    }
+
     if (!userAgent.startsWith("Go-http-client")) {
         return res.status(400).send("No cheating!!");
     }
