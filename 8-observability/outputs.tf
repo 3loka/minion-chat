@@ -13,7 +13,7 @@
 output "private_ip" {
   value = <<CONFIGURATION
     # Nomad server
-    ${aws_instance.noamd_server.private_ip},
+    ${aws_instance.nomad_server.private_ip},
 
     # Nomad client
     ${aws_instance.nomad_client[0].private_ip},
@@ -31,7 +31,7 @@ output "instance_ids" {
 output "ssh" {
   value = <<CONFIGURATION
     # Nomad server
-    ssh -i "minion-key.pem" ubuntu@${aws_instance.noamd_server.public_ip}
+    ssh -i "minion-key.pem" ubuntu@${aws_instance.nomad_server.public_ip}
 
     # Nomad client
     ssh -i "minion-key.pem" ubuntu@${aws_instance.nomad_client[0].public_ip}
@@ -41,8 +41,8 @@ output "ssh" {
 
 output "ui_urls" {
   value = <<CONFIGURATION
-    Consul: http://${aws_instance.noamd_server.public_ip}:8500
-    Nomad: http://${aws_instance.noamd_server.public_ip}:4646
+    Consul: http://${aws_instance.nomad_server.public_ip}:8500
+    Nomad: http://${aws_instance.nomad_server.public_ip}:4646
     CONFIGURATION
 }
 

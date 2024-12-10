@@ -24,6 +24,28 @@ resource "aws_security_group" "consul_ui_ingress" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Monitoring stack
+  ingress {
+    from_port       = 9090
+    to_port         = 9090
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = 3000
+    to_port         = 3000
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = 9093
+    to_port         = 9093
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
   # Fabio
   ingress {
     from_port   = 9999
@@ -128,7 +150,7 @@ resource "aws_security_group" "consul_ui_ingress" {
 }
 
 # Add EC2 instance for Consul
-resource "aws_instance" "noamd_server" {
+resource "aws_instance" "nomad_server" {
   instance_type = var.instance_type
   ami           = var.ami
   key_name      = aws_key_pair.minion-key.key_name
@@ -167,7 +189,7 @@ resource "aws_instance" "noamd_server" {
 
 # Update ResponseService to register with Consul
 resource "aws_instance" "nomad_client" {
-  depends_on    = [aws_instance.noamd_server]
+  depends_on    = [aws_instance.nomad_server]
   count         = var.response_service_count
   ami           = var.ami
   instance_type = var.instance_type
@@ -200,7 +222,7 @@ resource "aws_instance" "nomad_client" {
     cloud_env  = "aws"
     retry_join = var.retry_join
     # for registering with Consul
-    consul_ip             = aws_instance.noamd_server.private_ip
+    consul_ip             = aws_instance.nomad_server.private_ip
     application_port      = 5001
     application_name      = "response-service"
     application_health_ep = "response"

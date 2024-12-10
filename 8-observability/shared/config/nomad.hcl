@@ -23,6 +23,7 @@ vault {
   token            = "VAULT_TOKEN"
 }
 
+# Enable metrics collection
 telemetry {
   collection_interval = "1s"
   disable_hostname = true

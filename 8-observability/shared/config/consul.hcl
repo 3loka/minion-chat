@@ -6,7 +6,7 @@ advertise_addr = "IP_ADDRESS"
 bootstrap_expect = 1
 
 acl {
-    enabled = false
+  enabled = false
 }
 
 log_level = "INFO"
@@ -17,7 +17,7 @@ ui = true
 retry_join = ["RETRY_JOIN"]
 
 service {
-    name = "minion-consul"
+  name = "minion-consul"
 }
 
 ports {
@@ -26,4 +26,10 @@ ports {
 
 connect {
   enabled = true
+}
+
+telemetry {
+  disable_hostname = true
+  prometheus_retention_time = "24h"
+  disable_compat_1.9 = true
 }
