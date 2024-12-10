@@ -56,11 +56,11 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 
 6. **Deloyment**
    
-   **Update variables.hcl acordingly. Sepecially the `ami`**
+   **Update variables.hcl acordingly. Especially the `ami`**
    ```hcl
    # Packer variables (all are required)
    region                    = "us-east-1"
-   dockerhub_id              = "srahul3"
+   dockerhub_id              = "<your-dockerhub-id>"
 
    # Terraform variables (all are required)
    ami                       = "<your-ami-from-previous-step>"
