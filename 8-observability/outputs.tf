@@ -11,7 +11,7 @@
 # }
 
 output "private_ip" {
-    value = <<CONFIGURATION
+  value = <<CONFIGURATION
     # Nomad server
     ${aws_instance.noamd_server.private_ip},
 
@@ -22,14 +22,14 @@ output "private_ip" {
 }
 
 output "instance_ids" {
-    value = <<CONFIGURATION
+  value = <<CONFIGURATION
     ${aws_instance.nomad_client[0].id},
     ${aws_instance.nomad_client[1].id}
     CONFIGURATION
 }
 
 output "ssh" {
-    value = <<CONFIGURATION
+  value = <<CONFIGURATION
     # Nomad server
     ssh -i "minion-key.pem" ubuntu@${aws_instance.noamd_server.public_ip}
 

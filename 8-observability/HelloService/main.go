@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -59,8 +60,20 @@ func init() {
 func initTracer() {
 	ctx := context.Background()
 
-	// Create an OTLP HTTP exporter
-	exporter, err := otlptracehttp.New(ctx)
+	var otelpEndpoint string
+	if os.Getenv("ENV") == "DEV" {
+		otelpEndpoint = "3.84.233.253:4318"
+	} else {
+		otelpEndpoint = "jaeger-otlp.service.consul:4318"
+	}
+
+	client := otlptracehttp.NewClient(
+		otlptracehttp.WithEndpoint(otelpEndpoint), // Set the correct endpoint
+		otlptracehttp.WithInsecure(),              // Use HTTP instead of HTTPS
+	)
+
+	// Create an OTLP exporter
+	exporter, err := otlptrace.New(ctx, client)
 	if err != nil {
 		log.Fatalf("Failed to create OTLP trace exporter: %v", err)
 	}
@@ -130,7 +143,6 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Add HelloService-specific message
 	response["message"] = "Hello from HelloService!"
 	successfulResponses.Inc() // Increment successful responses
 
@@ -148,7 +160,6 @@ func main() {
 	// Register Prometheus metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())
 
-	// Register hello handler
 	http.HandleFunc("/hello", helloHandler)
 
 	fmt.Println("HelloService running on port 5000...")

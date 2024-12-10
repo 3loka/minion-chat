@@ -14,7 +14,7 @@ variable "dockerhub_id" {
 
 variable "ami" {
   description = "Hashistack AMI"
-  nullable = false
+  nullable    = false
 }
 
 variable "retry_join" {
