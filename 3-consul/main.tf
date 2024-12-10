@@ -24,10 +24,18 @@ resource "aws_security_group" "consul_ui_ingress" {
     cidr_blocks     = ["0.0.0.0/0"]
   }
 
-    # Consul
+  # hello-service
   ingress {
-    from_port       = 5000
-    to_port         = 5001
+    from_port       = 5050
+    to_port         = 5050
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
+  # response-service
+  ingress {
+    from_port       = 6060
+    to_port         = 6060
     protocol        = "tcp"
     cidr_blocks     = ["0.0.0.0/0"]
   }

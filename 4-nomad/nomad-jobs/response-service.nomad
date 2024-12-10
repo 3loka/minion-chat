@@ -10,7 +10,7 @@ job "response-service" {
      }
       mode = "bridge"
       port "http" {
-        static = 5001
+        static = 6060
       }
     }
 

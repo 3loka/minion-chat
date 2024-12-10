@@ -10,7 +10,7 @@ job "hello-service" {
      }
       mode = "bridge"
       port "http" {
-        static = 5000
+        static = 5050
       }
     }
 
