@@ -1,6 +1,6 @@
 provider "vault" {
   address = "http://${aws_instance.vault.public_ip}:8200"
-  token = "root"
+  token = local.vault_token
 }
 
 resource "vault_generic_secret" "example" {

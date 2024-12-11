@@ -10,6 +10,22 @@ import (
 )
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
+	resp, err := http.Get("http://response-service.service.consul:6060/response") // Static URL
+	if err != nil {
+		http.Error(w, "Failed to contact ResponseService", http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	response := make(map[string]interface{})
+	json.NewDecoder(resp.Body).Decode(&response)
+
+	response["message"] = "Hello from HelloService!"
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func vaultHandler(w http.ResponseWriter, r *http.Request) {
 	// Fetch database credentials from Vault
 	credentials, err := getVaultCredentials()
 	if err != nil {
@@ -49,6 +65,7 @@ func getVaultCredentials() (map[string]interface{}, error) {
 
 func main() {
 	http.HandleFunc("/hello", helloHandler)
+	http.HandleFunc("/hello_vault", vaultHandler)
 	fmt.Println("HelloService running on port 5000...")
 	log.Fatal(http.ListenAndServe(":5000", nil))
 }
