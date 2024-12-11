@@ -28,6 +28,7 @@ job "monitoring-stack" {
                 ports = ["prometheus"]
                 volumes = [
                     "local/prometheus.yml:/etc/prometheus/prometheus.yml",
+                    "local/alert-rules.yml:/etc/prometheus/alert-rules.yml",
                 ]
             }
 
@@ -53,12 +54,24 @@ job "monitoring-stack" {
 global:
   scrape_interval: 15s
 
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager.service.consul:9093']
+
+rule_files:
+  - "/etc/prometheus/alert-rules.yml"
+
 scrape_configs:
   - job_name: 'consul'
+    metrics_path: '/v1/agent/metrics'
     static_configs:
       - targets: ['consul.service.consul:8500']
 
   - job_name: 'nomad'
+    metrics_path: '/v1/metrics'
+    params:
+      format: ['prometheus']
     static_configs:
       - targets: ['nomad.service.consul:4646']
 
@@ -83,6 +96,23 @@ scrape_configs:
       - targets: ['alertmanager.service.consul:9093']
 EOF
                 destination = "local/prometheus.yml"
+            }
+
+            template {
+                data = <<EOF
+groups:
+- name: "Target Down"
+  rules:
+  - alert: "Instance Down"
+    expr: up == 0
+    for: 2m
+    labels:
+      severity: "critical"
+    annotations:
+      summary: "Instance down"
+      description: "Instance has been down for more than 2 minutes"
+EOF
+                destination = "local/alert-rules.yml"
             }
         }
 
@@ -161,7 +191,6 @@ EOF
                 data = <<EOF
 global:
   resolve_timeout: 5m
-  smtp_from: "alertmanager@example.org"
 
 route:
   group_wait: 30s

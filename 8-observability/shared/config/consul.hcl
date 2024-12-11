@@ -29,7 +29,6 @@ connect {
 }
 
 telemetry {
-  disable_hostname = true
   prometheus_retention_time = "24h"
-  disable_compat_1.9 = true
+  disable_hostname = true
 }
