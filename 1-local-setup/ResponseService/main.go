@@ -7,64 +7,67 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func responseHandler(w http.ResponseWriter, r *http.Request) {
-	// Fetch Minion phrases from Consul KV
-	phrases, err := getMinionPhrases()
-	var response map[string]interface{}
-	if err != nil {
-		log.Printf("Minion phrases fetch failed: %v", err)
-		response = map[string]interface{}{
-			"response_message": "Bello from ResponseService!",
-		}
-	} else {
-		response = map[string]interface{}{
-			"response_message": "Bello from ResponseService!",
-			"minion_phrases":   phrases,
-		}
-	}
-
-	// Check if the environment variable INSTANCE_ID is set
-	if instanceID := os.Getenv("INSTANCE_ID"); instanceID != "" {
-		response["response_message"] = fmt.Sprintf("Bello from ResponseService %s!", instanceID)
+	response := map[string]interface{}{
+		"response_message": "Bello from ResponseService!",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+
+	// register your progress in leadership board
+	err := registerProgress("garage")
+	if err != nil {
+		// set http status code to 500
+		http.Error(w, fmt.Sprintf("Failed to register progress %v", err), http.StatusInternalServerError)
+		return
+	}
 }
 
-func getMinionPhrases() ([]string, error) {
-	resp, err := http.Get("http://consul.service.consul:8500/v1/kv/minion_phrases?raw")
+func registerProgress(game string) error {
+	// register progress in leadership board
+	url := "http://leaderboard.ashesh-vidyut.sbx.hashidemos.io/api/"
+	// make a post call with header
+	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
-		log.Printf("Failed to fetch Minion phrases from kv store: %v", err)
-		return nil, err
+		fmt.Println(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	// UGLY WAY OF HANDLING SECRET, for demo purpose only
+	req.Header.Set("token", "ECD9823E-6E7E-42F0-BD72-1CA381098C0D")
+
+	// get dockerhub_id from environment variable
+	dockerhub_id := os.Getenv("TF_VAR_dockerhub_id")
+	if dockerhub_id == "" {
+		// error handling
+		return fmt.Errorf("TF_VAR_dockerhub_id not set")
+	}
+
+	payload := fmt.Sprintf(`{"user": "%s", "game": "%s"}`, dockerhub_id, game)
+	req.Body = io.NopCloser(strings.NewReader(payload))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Failed to register progress %v", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("Unexpected status code: %d", resp.StatusCode)
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
+	// read response body
+	msg, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Failed to read response body: %v", err)
-		return nil, err
+		return fmt.Errorf("Failed to read response body %v", err)
 	}
+	fmt.Println(string(msg))
 
-	var phrases []string
-	err = json.Unmarshal(body, &phrases)
-	if err != nil {
-		log.Printf("Failed to unmarshal response body: %v", err)
-		return nil, err
-	}
-
-	return phrases, nil
+	return nil
 }
 
 func main() {
 	http.HandleFunc("/response", responseHandler)
-	fmt.Println("ResponseService running on port 5001...")
-	log.Fatal(http.ListenAndServe(":5001", nil))
+	fmt.Println("ResponseService running on port 6060...")
+	log.Fatal(http.ListenAndServe(":6060", nil))
 }

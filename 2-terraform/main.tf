@@ -30,8 +30,15 @@ resource "aws_security_group" "minion_chat_security_group" {
   }
 
   ingress {
-    from_port   = 5000
-    to_port     = 5001
+    from_port   = 5050
+    to_port     = 5050
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+    ingress {
+    from_port   = 6060
+    to_port     = 6060
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -64,7 +71,12 @@ resource "aws_instance" "hello_service" {
     apt-get install -y docker.io
 
     systemctl start docker
-    docker run -d --name 'hello_service' -p 5000:5000 -e RESPONSE_SERVICE_HOST=${aws_instance.response_service.public_ip} ${var.dockerhub_id}/helloservice:latest
+
+    # Set the environment variable globally
+    echo "export TF_VAR_dockerhub_id=${var.dockerhub_id}" >> /etc/environment
+    echo "export TF_VAR_dockerhub_id=${var.dockerhub_id}" | sudo tee --append /home/ubuntu/.bashrc
+
+    # docker run -d --name 'hello_service' -p 5050:5050 -e RESPONSE_SERVICE_HOST=${aws_instance.response_service.public_ip} ${var.dockerhub_id}/helloservice:latest
   EOF
 
   tags = merge(
@@ -87,8 +99,12 @@ resource "aws_instance" "response_service" {
     apt-get update -y
     apt-get install -y docker.io
 
+    # Set the environment variable globally
+    echo "export TF_VAR_dockerhub_id=${var.dockerhub_id}" >> /etc/environment
+    echo "export TF_VAR_dockerhub_id=${var.dockerhub_id}" | sudo tee --append /home/ubuntu/.bashrc
+
     systemctl start docker
-    docker run -d --name 'response_service' -p 5001:5001 ${var.dockerhub_id}/responseservice:latest
+    # docker run -d --name 'response_service' -p 6060:6060 ${var.dockerhub_id}/responseservice:latest
   EOF
 
   tags = merge(
