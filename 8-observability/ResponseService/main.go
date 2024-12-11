@@ -64,7 +64,7 @@ func initTracer() {
 
 	var otelpEndpoint string
 	if os.Getenv("ENV") == "DEV" {
-		otelpEndpoint = "3.84.233.253:4318"
+		otelpEndpoint = "localhost:4318"
 	} else {
 		otelpEndpoint = "jaeger-otlp.service.consul:4318"
 	}
@@ -114,7 +114,6 @@ func responseHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "responseHandler")
 	defer span.End()
 
-	// Fetch Minion phrases from Consul KV
 	phrases, err := getMinionPhrases(ctx)
 	var response map[string]interface{}
 	if err != nil {
@@ -178,9 +177,8 @@ func getMinionPhrases(ctx context.Context) ([]string, error) {
 }
 
 func main() {
-	initTracer() // Initialize OpenTelemetry tracing
+	initTracer()
 
-	// Register Prometheus metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())
 
 	http.HandleFunc("/response", responseHandler)

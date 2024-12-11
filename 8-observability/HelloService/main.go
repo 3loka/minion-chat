@@ -62,7 +62,7 @@ func initTracer() {
 
 	var otelpEndpoint string
 	if os.Getenv("ENV") == "DEV" {
-		otelpEndpoint = "3.84.233.253:4318"
+		otelpEndpoint = "localhost:4318"
 	} else {
 		otelpEndpoint = "jaeger-otlp.service.consul:4318"
 	}
@@ -84,6 +84,7 @@ func initTracer() {
 			semconv.ServiceNameKey.String("hello-service"),
 		),
 	)
+
 	if err != nil {
 		log.Fatalf("Failed to create resource: %v", err)
 	}
@@ -112,7 +113,6 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "helloHandler")
 	defer span.End()
 
-	// Check for "DEV" environment variable
 	var responseServiceURL string
 	if os.Getenv("ENV") == "DEV" {
 		responseServiceURL = "http://localhost:5001/response"
@@ -155,9 +155,8 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	initTracer() // Initialize OpenTelemetry tracing
+	initTracer()
 
-	// Register Prometheus metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())
 
 	http.HandleFunc("/hello", helloHandler)
