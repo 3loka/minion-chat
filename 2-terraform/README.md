@@ -70,6 +70,21 @@ terraform apply
 
 ```
 
+Sample Outputs:
+```
+env = <<EOT
+    export HELLO_SERVICE=3.84.149.170
+    export RESPONSE_SERVICE=54.175.84.27
+
+EOT
+hello_service_cli = "curl http://3.84.149.170:5050/hello | jq"
+response_service_cli = "curl http://54.175.84.27:6060/response | jq"
+response_service_private_ip = "172.31.26.141"
+```
+
+### 4. **Setting the environment**
+Copy the env section from terraform output and execute in terminal
+
 ### 4. **HARDCODING the IPs**
 From the output of the `terraform apply`, select the private IP address of response service suggested by output `response_service_private_ip`, say it is `172.0.0.1`. 
 Apply this to code as shown below.
@@ -89,11 +104,9 @@ DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
 ```
 
 ### 5. **Manual deploying the Response Service**
-From the output of the `terraform apply`, select the private IP address of response service suggested by output `ssh_response_service`, say it is `ssh -i "minion-key.pem" ubuntu@3.0.0.1`.
-
 Run in new terminal
 ```bash
-ssh -i "minion-key.pem" ubuntu@3.0.0.1
+ssh -i "minion-key.pem" ubuntu@$RESPONSE_SERVICE
 docker run -d --name 'response_service' -p -e TF_VAR_dockerhub_id=${TF_VAR_dockerhub_id} 6060:6060 ${TF_VAR_dockerhub_id}/responseservice:latest
 sudo docker logs response_service
 # Listening on port 6060...
@@ -103,11 +116,9 @@ exit
 
 
 ### 5. **Manual deploying the Hello Service**
-From the output of the `terraform apply`, select the ssh command of the hello service suggested by output `ssh_hello_service`, say it is `ssh -i "minion-key.pem" ubuntu@3.0.0.2`.
-
 Run in new terminal
 ```bash
-ssh -i "minion-key.pem" ubuntu@3.0.0.2
+ssh -i "minion-key.pem" ubuntu@$HELLO_SERVICE
 docker run -d --name 'hello_service' -p 5050:5050 ${TF_VAR_dockerhub_id}/responseservice:latest
 sudo docker logs response_service
 # Listening on port 5050...
@@ -121,11 +132,9 @@ exit
 ### 6. **Access the Services**
 
 1. **Test HelloService**:
-From the output of the `terraform apply`, select the ssh command of the hello service suggested by output `ssh_hello_service`, say it is `curl http://3.0.0.1:5050/hello | jq`.
-
 Run in new terminal
 ```bash
-curl http://3.0.0.1:5050/hello | jq
+curl http://$HELLO_SERVICE:5050/hello | jq
 ```
 
 Expected Output:
@@ -137,11 +146,9 @@ Expected Output:
 ```
 
 2. **Test ResponseService**:
-From the output of the `terraform apply`, select the ssh command of the response service suggested by output `ssh_response_service`, say it is `curl http://3.0.0.2:6060/response | jq`.
-
 Run in new terminal
 ```bash
-curl http://3.0.0.2:5050/response | jq
+curl http://$RESPONSE_SERVICE:6060/response | jq
 ```
 
 Expected Output:
