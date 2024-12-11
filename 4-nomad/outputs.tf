@@ -46,3 +46,11 @@ output "ui_urls" {
     CONFIGURATION
 }
 
+output "env" {
+    value = <<CONFIGURATION
+    export HELLO_SERVICE=${aws_instance.hello_service.public_ip}
+    export RESPONSE_SERVICE_0=${aws_instance.response_service[0].public_ip}
+    export RESPONSE_SERVICE_1=${aws_instance.response_service[1].public_ip}
+    CONFIGURATION  
+}
+

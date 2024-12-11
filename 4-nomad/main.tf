@@ -26,8 +26,16 @@ resource "aws_security_group" "consul_ui_ingress" {
 
   # minion
   ingress {
-    from_port       = 5000
-    to_port         = 5001
+    from_port       = 5050
+    to_port         = 5050
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
+  # minion
+  ingress {
+    from_port       = 6060
+    to_port         = 6060
     protocol        = "tcp"
     cidr_blocks     = ["0.0.0.0/0"]
   }
@@ -202,9 +210,6 @@ data "aws_iam_policy_document" "auto_discover_cluster" {
     resources = ["*"]
   }
 }
-
-
-
 
 # generate a new key pair
 resource "tls_private_key" "pk" {

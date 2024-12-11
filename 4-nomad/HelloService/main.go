@@ -8,7 +8,7 @@ import (
 )
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
-	resp, err := http.Get("http://localhost:6060/response") // Static URL
+	resp, err := http.Get("http://response-service.service.consul:6060/response") // Static URL
 	if err != nil {
 		http.Error(w, "Failed to contact ResponseService", http.StatusInternalServerError)
 		return

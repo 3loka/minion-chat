@@ -1,32 +1,56 @@
 
-# Steps to Run Part 1 (Basic Setup)
+# Part 2: Say Hello to terrafom and AWS
+
+## Background
+Our Hello app is already running with following limitations
+1. **Unreliable Infrastructure**: Single-instance services with hardcoded IPs.
+2. **Lack of High Availability**: Only one instance of each service.
+3. **Limited Scalability**: Static setup not suitable for scaling.
+4. **No Fault Tolerance**: Services may fail without recovery mechanisms.
+5. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
+6. **Rigid Deployment**: Fixed configurations with minimal flexibility.
+
 
 ## Overview
-In **Part 1**, we deploy two simple microservices, HelloService and ResponseService, to demonstrate basic inter-service communication. 
-HelloService acts as the primary entry point, handling requests to its /hello endpoint. 
-It fetches a response from ResponseService at its /response endpoint and combines the messages into a single JSON output.
-HelloService returns a friendly message "Hello from HelloService!" alongside the "Bello from ResponseService!" response received from ResponseService.
-The two services communicate using static IPs and ports, showcasing the foundational setup for microservices without involving advanced tools like Consul 
-for service discovery or Nomad for orchestration.
+We will be targetting to solve the problem of unreliable infra by deploying this app in AWS cloud.
+
+### Reliable infrastructure
+- We will use AWS Cloud platform to lift and shift our application
+
+### Complexity of managing the deployment on cloud
+- We will make use of simple Terraform to spinup the infra required for the application.
+
+#### List if infrastructure items
+- Auto selecting the latest ubuntu image.
+- Creating Security Group with ingress and egress defined.
+- 2 AWS Instance to host the application with docker installed
+- One private key to SSH the two AWS Instance
+- Inject the environment variable `TF_VAR_dockerhub_id` into Response Service
+- (We will do it manually) Auto running the application
 
 ---
 
 ## Prerequisites
 1. **Tools Installed**:
    - Terraform CLI
-   - jq cli `brew install jq`
+   - jq CLI
 2. **AWS Setup** (For AWS deployment):
    - An AWS account with access keys configured.
-3. **Docker Images**
-   - Docker images compiled in last activity and available on docker-hub
 
 ---
 
-## Running on AWS
+## Infrastructure on AWS
 
-### **Prerequisites**
+### 1. **Navigate to the project folder**
+```bash
+cd 2-terraform
+```
 
-```sh
+### 2. **Setup and Auth**
+Open a terminal and run below commands in sequence
+```bash
+
+# Set up Docker Hub credentials  
 export TF_VAR_dockerhub_id=<dockerhub-id>
 curl -L https://hub.docker.com/v2/orgs/$TF_VAR_dockerhub_id | jq
 # make sure you see your account information in resposne
@@ -38,135 +62,106 @@ export AWS_SESSION_TOKEN=REDACTED
                   
 ```
 
----
+### 3. **Spinning up the Infrastructure**
 
-## Running on AWS
-
-### **Step-by-Step Guide**
-
-### 1. **Navigate to the project folder**
-```bash
-cd 2-terraform
-```
-
----
-
-### 2. **Initialize Terraform**
-Run the following command to download required providers:
 ```bash
 terraform init
-```
-
----
-
-### 2. **Deploy HelloService and ResponseService**
-Use Terraform to apply the infrastructure configuration:
-```bash
 terraform apply
+
 ```
 
-Review the changes and type `yes` to confirm.
+### 4. **HARDCODING the IPs**
+From the output of the `terraform apply`, select the private IP address of response service suggested by output `response_service_private_ip`, say it is `172.0.0.1`. 
+Apply this to code as shown below.
+
+./HelloService/main.go 
+```diff
+- resp, err := http.Get("http://localhost:6060/response") // Static URL
++ resp, err := http.Get("http://172.0.0.1:6060/response") // Static URL
+
+```
+
+### 5. **Push Docker Images to Docker Hub**
+
+```bash
+DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose build
+DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
+```
+
+### 5. **Manual deploying the Response Service**
+From the output of the `terraform apply`, select the private IP address of response service suggested by output `ssh_response_service`, say it is `ssh -i "minion-key.pem" ubuntu@3.0.0.1`.
+
+Run in new terminal
+```bash
+ssh -i "minion-key.pem" ubuntu@3.0.0.1
+docker run -d --name 'response_service' -p -e TF_VAR_dockerhub_id=${TF_VAR_dockerhub_id} 6060:6060 ${TF_VAR_dockerhub_id}/responseservice:latest
+sudo docker logs response_service
+# Listening on port 6060...
+
+exit
+```
+
+
+### 5. **Manual deploying the Hello Service**
+From the output of the `terraform apply`, select the ssh command of the hello service suggested by output `ssh_hello_service`, say it is `ssh -i "minion-key.pem" ubuntu@3.0.0.2`.
+
+Run in new terminal
+```bash
+ssh -i "minion-key.pem" ubuntu@3.0.0.2
+docker run -d --name 'hello_service' -p 5050:5050 ${TF_VAR_dockerhub_id}/responseservice:latest
+sudo docker logs response_service
+# Listening on port 5050...
+
+exit
+```
 
 ---
+
 
 ### 6. **Access the Services**
-Once deployment is complete, Terraform will output the cli commands for both services:
 
-Example Output:
-```plaintext
-hello_service_cli = "curl http://<hello-service-dns>:5000/hello | jq"
-response_service_cli = "curl http://<response-service-public-ip>:5001/response | jq"
+1. **Test HelloService**:
+From the output of the `terraform apply`, select the ssh command of the hello service suggested by output `ssh_hello_service`, say it is `curl http://3.0.0.1:5050/hello | jq`.
+
+Run in new terminal
+```bash
+curl http://3.0.0.1:5050/hello | jq
 ```
 
-Test the services using `curl`:
-1. **Test HelloService**:
-   ```bash
-   curl http://<hello-service-public-ip>:5000/hello | jq
-   ```
-   Expected Output:
-   ```json
-   {
-       "message": "Hello from HelloService!",
-       "response_message": "Bello from ResponseService!"
-   }
-   ```
+Expected Output:
+```json
+{
+    "message": "Hello from HelloService!",
+    "response_message": "Bello from ResponseService!"
+}
+```
 
 2. **Test ResponseService**:
-   ```bash
-   curl http://<response-service-public-ip>:5001/response | jq
-   ```
-   Expected Output:
-   ```json
-   {
-       "message": "Bello from ResponseService!"
-   }
-   ```
+From the output of the `terraform apply`, select the ssh command of the response service suggested by output `ssh_response_service`, say it is `curl http://3.0.0.2:6060/response | jq`.
 
----
-
-### 7. **Verify and Debug**
-- **Logs**:
-  SSH into the instances using your key pair to view logs:
-  ```bash
-  # reference `ssh_hello_service` in terrform output
-  ssh -i minion-key.pem ubuntu@<hello-service-public-ip>
-  ```
-
-  Check the logs:
-  ```bash
-  sudo docker logs hello_service
-  > HelloService running on port 5000...
-
-  sudo docker exec -it hello_service /bin/printenv | grep RESPONSE_SERVICE_HOST
-  > RESPONSE_SERVICE_HOST=**.**.**.**
-
-  # Observe that IP is same as `response_service` public IP
-  ```
-
-- **Connectivity**:
-  Ensure HelloService can reach ResponseService via the specified static IP.
-
----
-
-### 8. **Cleanup**
-To remove the infrastructure, use Terraform:
+Run in new terminal
 ```bash
-terraform destroy
+curl http://3.0.0.2:5050/response | jq
 ```
-Confirm by typing `yes`.
+
+Expected Output:
+```json
+{
+    "message": "Bello from ResponseService!"
+}
+```
 
 ---
 
-## Additional Notes
-- If you modify the Go files, rebuild the Docker images and push them to Docker Hub.
-- Use a consistent naming scheme for your services (e.g., `helloservice:latest` and `responseservice:latest`).
+## Take aways?
+  • Cloud provides reliable insfrastructure
+  • Complex infra can be easily managed using Terraform
 
----
-
-## Why This Setup?
-
-  • Simple Learning:
-  • Demonstrates inter-service communication without introducing complex tools or concepts.
-  • Foundation:
-  • Sets up the base infrastructure to expand upon in future parts, where dynamic service discovery and orchestration will be introduced.
 
 ## Limitations
-
-  1.  Static IPs and Ports:
-  • The hardcoded configuration makes scaling and dynamic updates difficult.
-  • It’s not suitable for production environments where services may move between nodes or instances.
-  2.  No Load Balancing:
-  • Requests to ResponseService always go to a single, predefined address.
-  3.  No Security:
-  • No authentication, encryption, or secure communication is configured between the services.
-
-## Next Steps
-
-In subsequent parts, we address these limitations by:
-
-  • Introducing Packer: To create reusable AMIs with pre-installed dependencies, simplifying deployment and ensuring consistency.
-  • Adding Consul: For dynamic service discovery, allowing services to locate and communicate with each other without hardcoding static IPs (Part 2).
-  • Integrating Nomad: For orchestration and scaling, enabling efficient deployment and management of services across multiple nodes (Part 3).
-  • Utilizing Vault: For secure secret management, dynamically generating and securely distributing secrets like database credentials (Part 4).
-
-This incremental approach demonstrates how to evolve a simple microservice setup into a robust, production-ready system.
+1. **Microservices Discovery**: Service discovery is a big challenge
+2. **Limited Availability**: Hardcoded IPs makes the setup extremly difficult to `scale-up`, `scale-down`, hence application is not HA.
+3. **Limited Scalability**: Hardcoded IPs makes the setup extremly difficult to `scale-up`, `scale-down`.
+4. **No Fault Tolerance**: Services may fail without recovery mechanisms.
+5. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
+6. **Rigid Deployment**: Fixed configurations with minimal flexibility.
