@@ -8,8 +8,8 @@ Our Hello app is already running with following limitations
 3. **Limited Scalability**: Hardcoded IPs makes the setup extremly difficult to `scale-up`, `scale-down`.
 4. **No Fault Tolerance**: Services may fail without recovery mechanisms.
 5. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
-6. **Manual Application lifecyle**: Application lifecycle is difficult to maintain using terraform/manually. The compute is not utilized efficiently.
-7. **Hardcoded Response**
+6. **Manual Application Management**: Application lifecycle is difficult to maintain using terraform/manually. The compute is not utilized efficiently.
+7. **Lack of Resource Optimization** One AWS Instance per Service Instance is not the efficient and cost effective way to run production.
 
 ## Overview
 This section introduces HashiCorp Consul to enhance service discovery and fault tolerance for HelloService and ResponseService:
@@ -41,7 +41,7 @@ This section introduces HashiCorp Consul to enhance service discovery and fault 
    ```
 
 3. **Uniquely Indentifying the AWS instance**
-   While we will attempt to scale up the Response Service, we need to identify which instance of Resonse Service serves us!
+   While we will attempt to scale up the Response Service, we need to identify which instance of Response Service serves us!
    
    From
    ```golang
@@ -221,8 +221,30 @@ This section introduces HashiCorp Consul to enhance service discovery and fault 
       log.Fatal(http.ListenAndServe(":6060", nil))
    }
 
+   // getPrivateIPAddress fetches the private IP address of the instance
+   func getPrivateIPAddress() (string, error) {
+      metadataURL := "http://169.254.169.254/latest/meta-data/local-ipv4" // AWS metadata URL for private IP
+      resp, err := http.Get(metadataURL)
+      if err != nil {
+         log.Fatalf("Failed to fetch private IP address: %v", err)
+         return "", err
+      }
+      defer resp.Body.Close()
+
+      ip, err := ioutil.ReadAll(resp.Body)
+      if err != nil {
+         log.Fatalf("Failed to read response body for private IP address: %v", err)
+         return "", err
+      }
+
+      return string(ip), nil
+   }
+
    func registerService(service string, port int, healthEp string) {
-      privateIP := getPrivateIPAddress()
+      privateIP, err := getPrivateIPAddress()
+      if err != nil {
+         log.Fatalf("Failed to get private IP address: %v", err)
+      }
 
       // Define the service registration data
       serviceRegistration := map[string]interface{}{
@@ -254,20 +276,14 @@ This section introduces HashiCorp Consul to enhance service discovery and fault 
    }
    ```
 
-5. **Set the minion phrase in Consul KV**
-   
-   To add minion phrase in Cosnul KV, SSH into one of the client machine and execute
-   ```sh
-   curl --request PUT --data '["Bello!", "Poopaye!", "Tulaliloo ti amo!"]' http://consul.service.consul:8500/v1/kv/minion_phrases
-   ```
-
-6. **Push Docker Images to Docker Hub**
+5. **Push Docker Images to Docker Hub**
 
    ```bash
    DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose build
    DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
    ```
-7. **Building AMI using Packer**
+
+6. **Building AMI using Packer**
    ```bash
    packer init -var-file=variables.hcl image.pkr.hcl
    packer build -var-file=variables.hcl image.pkr.hcl
@@ -275,7 +291,7 @@ This section introduces HashiCorp Consul to enhance service discovery and fault 
 
    Record the AMI id, we will need it in next step
 
-8. **Infra and auto deloyment**
+7. **Infra and auto deloyment**
    
    **Update variables.hcl acordingly. Sepecially the `ami`**
    ```hcl
@@ -296,10 +312,43 @@ This section introduces HashiCorp Consul to enhance service discovery and fault 
    terraform apply -var-file=variables.hcl
    ```
 
-7. **Test the Services**:
+   Copy the env section from terraform output and execute in terminal
+   ```bash
+    # Sample only
+    export SSH_HELLO_SERVICE="ssh -i "minion-key.pem" ubuntu@<54.152.176.160>"
+    export SSH_RESPONSE_SERVICE_0="ssh -i "minion-key.pem" ubuntu@44.212.58.112"
+    export SSH_RESPONSE_SERVICE_1="ssh -i "minion-key.pem" ubuntu@3.86.29.88"
+
+    export HELLO_SERVICE=54.152.176.160
+    export RESPONSE_SERVICE_0=44.212.58.112
+    export RESPONSE_SERVICE_1=3.86.29.88
+    ```
+
+
+8. **Set the minion phrase in Consul KV**
+   
+   To add minion phrase in Cosnul KV
+   ```sh
+   curl --request PUT --data '["Bello!", "Poopaye!", "Tulaliloo ti amo!"]' http://$HELLO_SERVICE:8500/v1/kv/minion_phrases
+   ```
+
+   Expectation
+   ```
+   true
+   ```
+
+10. **Access Consul UI**:
+   - Open the Consul UI in a browser:
+     ```plaintext
+     URL indicated by `consul_ui_url` from terraform output
+     ```
+   
+     Verify the 2 instances of `Response Service` is listed and healthy.
+
+10. **Test the Services**:
    - Test **HelloService**:
      ```bash
-     curl http://<hello-service>:5050/hello | jq
+     curl http://$HELLO_SERVICE:5050/hello | jq
      ```
    - Expected Response:
      ```json
@@ -314,20 +363,32 @@ This section introduces HashiCorp Consul to enhance service discovery and fault 
      }
      ```
 
-8. **Access Consul UI**:
-   - Open the Consul UI in a browser:
-     ```plaintext
-     http://localhost:8500
-     ```
-9. **SSH to the 1st Response Service**:
-   - use ssh command suggested in terraform output and connect to the instance suggested by `Hello Service response`
-   - Testing DNS:
-     ```bash
-     curl consul.service.consul:8500
-     <a href="/ui/">Moved Permanently</a>.
+11. **SSH to the 1st Response Service**:
+      Open a new setminal and set the env from terraform
 
-     curl response-service.service.consul:6060/response | jq
-     {
+      SSH into the Response Service machine which responded to the request.
+      ```bash
+      ssh -i "minion-key.pem" ubuntu@$RESPONSE_SERVICE_0
+      ```
+
+      Testing DNS: Run this command
+      ```bash
+      curl consul.service.consul:8500
+      ```
+
+      Expected output
+      ```
+      <a href="/ui/">Moved Permanently</a>.
+      ```
+
+      Testing DNS: Run this command
+      ```bash
+      curl response-service.service.consul:6060/response | jq
+      ```
+
+      Expected output
+      ```json
+      {
       "message": "Hello from HelloService!",
       "minion_phrases": [
          "Bello!",
@@ -336,11 +397,22 @@ This section introduces HashiCorp Consul to enhance service discovery and fault 
       ],
       "response_message": "Bello from ResponseService i-05506b6e36d25223a!"
       }
+      ```
 
+      Run
+      ```bash
       sudo docker pause response-service
+      ```
 
+
+      **Test `Hello Service` again in previous terminal**
+      ```bash
       # The other response instance shall kick in now
-      curl hello-service.service.consul:5000/hello | jq
+      curl http://$HELLO_SERVICE:5050/hello | jq
+      ```
+
+      Expectation: The other instance of Response Service starts serving the requests. 
+      ```json
       {
       "message": "Hello from HelloService!",
       "minion_phrases": [
@@ -350,22 +422,14 @@ This section introduces HashiCorp Consul to enhance service discovery and fault 
       ],
       "response_message": "Bello from ResponseService i-0a5e388ad2762ec84!"
       }
+      ```
 
+      Restore the service
+      ```bash
       sudo docker unpause response-service
-
-      # back to the first response service
-      curl hello-service.service.consul:5000/hello | jq
-      {
-      "message": "Hello from HelloService!",
-      "minion_phrases": [
-         "Bello!",
-         "Poopaye!",
-         "Tulaliloo ti amo!"
-      ],
-      "response_message": "Bello from ResponseService i-05506b6e36d25223a!"
-      }
-     ```
-10. **DIY**:
+      ```
+      
+12. **DIY**:
    - Read the code and identify how to add `Tank yu` to the `minion_phrases`
 
 ## Key Points
