@@ -15,6 +15,16 @@ resource "nomad_job" "hello_service" {
   })
 }
 
+resource "vault_policy" "nomad_job" {
+  name = "response-service-job"
+
+  policy = <<EOT
+path "secret/data/database/creds/my-role" {
+  capabilities = ["read"]
+}
+EOT
+}
+
 resource "nomad_job" "response_service" {
   count = var.deploy_apps ? 1 : 0
 

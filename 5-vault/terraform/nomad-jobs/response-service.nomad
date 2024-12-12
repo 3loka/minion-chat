@@ -17,6 +17,10 @@ job "response-service" {
     task "response" {
       driver = "docker"
 
+      vault {
+        policies = ["response-service-job"]
+      }
+
       template {
         data = <<EOF
 {{ with secret "secret/data/database/creds/my-role" }}

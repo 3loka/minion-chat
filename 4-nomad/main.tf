@@ -5,12 +5,7 @@ provider "aws" {
 #1.  Add a new EC2 instance for Consul.
 #2.  Modify HelloService and ResponseService to include Consul configuration.
 
-locals {
-  security_group = var.existing_security_group ? var.existing_security_group : aws_security_group.consul_ui_ingress[0]
-}
-
 resource "aws_security_group" "consul_ui_ingress" {
-  count = var.existing_security_group ? 0 : 1
 
   name   = "${var.name_prefix}-ui-ingress"
 
@@ -140,7 +135,7 @@ resource "aws_instance" "noamd_server" {
     vault_token = var.vault_token
   })
 
-  vpc_security_group_ids = [local.security_group.id]
+  vpc_security_group_ids = [aws_security_group.consul_ui_ingress.id]
 }
 
 # Update ResponseService to register with Consul
@@ -185,7 +180,7 @@ resource "aws_instance" "nomad_client" {
     dockerhub_id              = var.dockerhub_id
   })
 
-  vpc_security_group_ids = [local.security_group.id]
+  vpc_security_group_ids = [aws_security_group.consul_ui_ingress.id]
 }
 
 

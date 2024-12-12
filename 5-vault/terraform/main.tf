@@ -215,16 +215,16 @@ resource "aws_instance" "vault" {
   iam_instance_profile = aws_iam_instance_profile.instance_profile_vault.name
 }
 
-resource "time_sleep" "wait_30_seconds" {
+resource "time_sleep" "wait_90_seconds" {
   depends_on = [aws_instance.vault]
 
-  create_duration = "30s"
+  create_duration = "90s"
 }
 
 
 # Add EC2 instance for Consul
 resource "aws_instance" "nomad_server" {
-  depends_on = [time_sleep.wait_30_seconds]
+  depends_on = [time_sleep.wait_90_seconds]
   instance_type = var.instance_type
   ami = var.ami
   key_name      = aws_key_pair.minion-key-vault.key_name
@@ -302,7 +302,7 @@ resource "aws_instance" "nomad_client" {
     application_port          = 5001
     application_name          = "response-service"
     application_health_ep     = "response"
-    dockerhub_id              = var.dockerhub_id
+    dockerhub_id              = var.docker_user
   })
 
   vpc_security_group_ids = [aws_security_group.minion_sg.id]

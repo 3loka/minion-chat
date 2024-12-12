@@ -34,8 +34,8 @@ output "ssh" {
     ssh -i "minion-key-vault.pem" ubuntu@${aws_instance.nomad_server.public_ip}
 
     # Nomad client
-    ssh -i "minion-key-vault.pem" ubuntu@${aws_instance.nomad_client[0].public_ip}
-    ssh -i "minion-key-vault.pem" ubuntu@${aws_instance.nomad_client[1].public_ip}
+    ssh -i "minion-vault-key.pem" ubuntu@${aws_instance.nomad_client[0].public_ip}
+    ssh -i "minion-vault-key.pem" ubuntu@${aws_instance.nomad_client[1].public_ip}
     CONFIGURATION
 }
 

@@ -48,7 +48,7 @@ variable "docker_password" {
 
 variable "ami" {
   description = "ami to use for deployment"
-  default = "ami-0824ee52725edc7e7"
+  default = "ami-0bbedcb6360a12dbb"
 }
 
 variable "retry_join" {
@@ -60,9 +60,4 @@ variable "retry_join" {
 variable "response_service_count" {
   description = "Number of response service instances to create"
   default     = 2
-}
-
-variable "dockerhub_id" {
-  description = "Your docker hub handle"
-  default = "kkavish"
 }
