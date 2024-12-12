@@ -10,7 +10,7 @@ job "hello-service" {
      }
       mode = "bridge"
       port "http" {
-        static = 5000
+        static = 5050
       }
     }
 
@@ -28,7 +28,7 @@ job "hello-service" {
 
         check {
           type     = "http"
-          path     = "/hello"
+          path     = "/health"
           interval = "10s"
           timeout  = "2s"
         }

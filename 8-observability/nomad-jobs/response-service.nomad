@@ -10,7 +10,7 @@ job "response-service" {
      }
       mode = "bridge"
       port "http" {
-        static = 5001
+        static = 6060
       }
     }
 
@@ -28,7 +28,7 @@ job "response-service" {
 
         check {
           type     = "http"
-          path     = "/response"
+          path     = "/health"
           interval = "10s"
           timeout  = "2s"
         }
