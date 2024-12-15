@@ -2,7 +2,13 @@
 # Steps to Run Part 1 (Basic Setup)
 
 ## Background
+<img src="resources/image.png" alt="drawing" style="width:200px;"/>
+
+
 Kevin, our minion friend, wants to deploy a Hello app that will be accessible to other Minion friends over the internet.
+
+<img src="resources/image2.png" alt="drawing" style="width:200px;"/>
+
 
 ## Overview
 This setup involves deploying two simple microservices, **HelloService** and **ResponseService**, to demonstrate basic inter-service communication:  
@@ -98,8 +104,9 @@ kill <pid>
 
 ## Limitations
 1. **Unreliable Infrastructure**: Single-instance services with hardcoded IPs.
-2. **Lack of High Availability**: Only one instance of each service.
-3. **Limited Scalability**: Hardcoded IPs makes the setup extremly difficult to `scale-up`, `scale-down`.
-4. **No Fault Tolerance**: Services may fail without recovery mechanisms.
-5. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
-6. **Rigid Deployment**: Fixed configurations with minimal flexibility.
+2. **No release Package**: Code is deployed directly by compiling code. This limits the Portability, Env Consistencey, Faster Deployment, Scalability, Isolation, Enhanced Security, Version Controlled...
+3. **Lack of High Availability**: Only one instance of each service.
+4. **Limited Scalability**: Hardcoded IPs makes the setup extremly difficult to `scale-up`, `scale-down`.
+5. **No Fault Tolerance**: Services may fail without recovery mechanisms.
+6. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
+7. **Rigid Deployment**: Fixed configurations with minimal flexibility.
