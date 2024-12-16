@@ -11,7 +11,7 @@ COPY . .
 RUN go build -o main main.go
 
 # Expose the desired port (e.g., 8080)
-EXPOSE 5001
+EXPOSE 6060
 
 # Run the executable
 CMD ["./main"]

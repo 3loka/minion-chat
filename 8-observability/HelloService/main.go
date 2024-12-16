@@ -115,9 +115,9 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 
 	var responseServiceURL string
 	if os.Getenv("ENV") == "DEV" {
-		responseServiceURL = "http://localhost:5001/response"
+		responseServiceURL = "http://localhost:6060/response"
 	} else {
-		responseServiceURL = "http://response-service.service.consul:5001/response"
+		responseServiceURL = "http://response-service.service.consul:6060/response"
 	}
 
 	// Call the ResponseService
@@ -169,6 +169,6 @@ func main() {
 
 	http.HandleFunc("/health", healthHandler)
 
-	fmt.Println("HelloService running on port 5000...")
-	log.Fatal(http.ListenAndServe(":5000", nil))
+	fmt.Println("HelloService running on port 5050...")
+	log.Fatal(http.ListenAndServe(":5050", nil))
 }

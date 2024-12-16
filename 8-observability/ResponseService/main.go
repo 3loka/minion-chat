@@ -191,6 +191,6 @@ func main() {
 
 	http.HandleFunc("/health", healthHandler)
 
-	fmt.Println("ResponseService running on port 5001...")
-	log.Fatal(http.ListenAndServe(":5001", nil))
+	fmt.Println("ResponseService running on port 6060...")
+	log.Fatal(http.ListenAndServe(":6060", nil))
 }
