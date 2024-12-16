@@ -30,5 +30,5 @@ variable "name_prefix" {
 
 variable "response_service_count" {
   description = "Number of response service instances to create"
-  default     = 1
+  default     = 2
 }

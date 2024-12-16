@@ -1,0 +1,10 @@
+services:
+  hello-service:
+    image: ${TF_VAR_dockerhub_id}/helloservice:latest
+    container_name: helloservice
+    build: ./HelloService
+  
+  response-service:
+    image: ${TF_VAR_dockerhub_id}/responseservice:latest
+    container_name: responseservice
+    build: ./ResponseService
