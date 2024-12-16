@@ -1,7 +1,7 @@
 
-# Monitoring & Alerting Setup
+# Part 8: Platform Integration: To prod and beyond 🚀
 
-Welcome to the workshop! 🚀 In this hands-on guide, you'll be setting up a full monitoring and alerting stack on Nomad using Prometheus, Grafana, and Alertmanager. By the end of this setup, you'll have a complete monitoring solution in place, with real-time alerting and escalations.
+This part introduces the critical practices required for taking services to production. The focus will be on understanding and implementing an observability stack, setting up alerts for proactive monitoring, and learning fault-handling strategies through real-world simulations for the services `HelloService` and `ResponseService`.
 
 ## 🛠 Prerequisites
 Before we begin, make sure you have:
@@ -24,7 +24,37 @@ We’ll monitor:
 
 ## 🚀 Step-by-Step Setup
 
-### 1. Deploy the Monitoring Stack
+### 1. Code Changes
+   We will be modifying the code we built for step 4 and adding some observability wings to it.
+   Right now, we don't know what goes with our application at any moment without any manual checks. That too, with very limited information.
+   In this step we will be adding couple of lines of not-so-scaringly code blocks to our application responseservice as well as helloservice which will help it to emit some state information. This can include metrics related to requests served, tracing information containing the request path etc.,
+
+   You may compare the code under `./HelloService/main.go` with `4-nomad/HelloService/main.go` to understand what all metrics and tracing information has been instrumented.
+
+### 2. Push Docker Images to Docker Hub
+   If necessary, update the tags from the docker-compose.yml.
+
+   Open a new terminal to build docker and set the following env
+
+   ```bash
+   # Set up Docker Hub credentials  
+   export TF_VAR_dockerhub_id=<dockerhub-id>
+   curl -L https://hub.docker.com/v2/orgs/$TF_VAR_dockerhub_id | jq
+   # make sure you see your account information in response
+
+   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose build
+   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
+   ```
+
+### 3. Deploy the infrastructure changes
+
+Since we're adding couple more services in this step, we need to expose those ports to the outside world so that we can access the services. 
+
+For that
+1. `terraform init`
+2. `terraform apply -var-file=variables.hcl`
+
+### 4. Deploy the Monitoring Stack
 Let’s deploy the monitoring stack on **Nomad**.
 
 1. Open **Nomad UI**.
@@ -36,7 +66,7 @@ Now, sit back and let Nomad launch the monitoring stack for you! 🔥
 
 ---
 
-### 2. Configure Prometheus
+### 5. Configure Prometheus
 
 Prometheus scrapes metrics from the following targets:
 - **Consul**: `consul.service.consul:8500`
@@ -50,7 +80,7 @@ The Prometheus config is defined in `prometheus.yml`. To view the metrics:
 
 ---
 
-### 3. Visualize Metrics in Grafana
+### 6. Visualize Metrics in Grafana
 
 Let’s make those metrics beautiful! 🎨
 
@@ -62,7 +92,7 @@ Let’s make those metrics beautiful! 🎨
 
 ---
 
-### 4. Set Up Alerting with Alertmanager
+### 7. Set Up Alerting with Alertmanager
 
 Now let’s configure alerting rules to notify us when something goes wrong.
 
@@ -78,7 +108,7 @@ When the alert is triggered, Alertmanager will send a notification to a webhook 
 
 ---
 
-### 5. Simulate an Alert 🚨
+### 8. Simulate an Alert 🚨
 
 Let’s trigger an alert to see how the system reacts.
 
@@ -91,21 +121,35 @@ Let’s trigger an alert to see how the system reacts.
 
 Pretty cool, right? 😎
 
+
+### 9. Tracing
+In this step let's explore on enabling distributed tracing support for our application.
+We can get started by deploying jeager stack which contains open-telemtry collector as well as jaeger UI which we can use to dig deeper into traces.
+
+* Once tracing job is deployed, access the jaeger UI through `http://<nomad-client-ip>:16686`
+* Access the hello service to generate some traces for both helloservice as well as responseservice.
+* Play with the Jaeger UI to understand the distributed tracing between two mircroservices.
+* There's a bug which you can spot using tracing on the responseservice. See if you can find it by exploring the traces and fix it :)
+
+
 ---
 
-## 🎉 Full End-to-End Flow
+## Full End-to-End Flow
 
-1. **Metrics Exposure**: `hello-service` and `response-service` expose metrics.
+1. **Metrics Exposure**: `hello-service` and `response-service` expose metrics as well as tracing infromation.
 2. **Prometheus**: Scrapes these metrics, as well as those from Nomad and Consul.
 3. **Grafana**: Visualizes the metrics in real-time using beautiful dashboards.
 4. **Prometheus Alerts**: Prometheus triggers an alert when conditions are met.
+5. **Tracing with OpenTelemtry**: Application exposed traces can be explored here with Jaeger.
 5. **Alertmanager Escalation**: Alertmanager forwards the alert to the webhook URL for further action.
 
 ---
 
-## 💡 Conclusion
+## 💡 Keypoints
 
 By now, you have a fully functional monitoring setup, capable of visualizing metrics and sending real-time alerts! Keep experimenting by tweaking alert rules, adding more targets, or even exploring different visualization options in Grafana.
+
+Adding observability to our stack enables us to monitor our application stack 24*7 with carefully crafted alerts and playbooks which will enable our app to serve customer requests with maximum availablity.
 
 Happy Monitoring! 🎉🚀
 
@@ -115,3 +159,5 @@ Happy Monitoring! 🎉🚀
 - [Prometheus Documentation](https://prometheus.io/docs/introduction/overview/)
 - [Grafana Documentation](https://grafana.com/docs/grafana/latest/)
 - [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/)
+- [Open-Telemetry](https://opentelemetry.io/docs/)
+- [Jaeger](https://www.jaegertracing.io/docs/2.1/architecture/)
