@@ -53,3 +53,5 @@ INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://instance-data/la
 # sleep 10
 
 # curl --request PUT --data '["Bello!", "Poopaye!", "Tulaliloo ti amo!"]' http://consul.service.consul:8500/v1/kv/minion_phrases
+
+echo "export TF_VAR_dockerhub_id=\"${dockerhub_id}\"" >> ~/.bashrc

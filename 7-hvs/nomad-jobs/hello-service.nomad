@@ -1,7 +1,7 @@
-job "response-service" {
+job "hello-service" {
   datacenters = ["dc1"]
 
-  group "response-group" {
+  group "hello-group" {
     count = 1
     
     network {
@@ -10,30 +10,25 @@ job "response-service" {
      }
       mode = "bridge"
       port "http" {
-        static = 6060
+        static = 5050
       }
     }
 
-    task "response" {
+    task "hello" {
       driver = "docker"
 
       config {
-        image = "srahul3/responseservice:latest"
+        image = "absolutelightning/helloservice:latest"
         ports = ["http"]
       }
 
-      env {
-        TF_VAR_dockerhub_id = "${TF_VAR_dockerhub_id}"
-      }
-
-
       service {
-        name = "response-service"
+        name = "hello-service"
         port = "http"
 
         check {
           type     = "http"
-          path     = "/response"
+          path     = "/hello"
           interval = "10s"
           timeout  = "2s"
         }
