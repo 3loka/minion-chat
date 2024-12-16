@@ -17,9 +17,7 @@ acl {
 
 vault {
   enabled          = true
-  address          = "http://127.0.0.1:8200"
-  task_token_ttl   = "1h"
-  create_from_role = "default"
+  address          = "http://active.vault.service.consul:8200"
   token            = "VAULT_TOKEN"
 }
 
