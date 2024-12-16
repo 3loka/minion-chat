@@ -77,11 +77,11 @@ scrape_configs:
 
   - job_name: 'helloservice'
     static_configs:
-      - targets: ['hello-service.service.consul:5050']
+      - targets: ['hello-service.service.consul:5000']
 
   - job_name: 'responseservice'
     static_configs:
-      - targets: ['response-service.service.consul:6060']
+      - targets: ['response-service.service.consul:5001']
 
   - job_name: 'prometheus'
     static_configs:

@@ -115,9 +115,9 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 
 	var responseServiceURL string
 	if os.Getenv("ENV") == "DEV" {
-		responseServiceURL = "http://localhost:6060/response"
+		responseServiceURL = "http://localhost:5001/response"
 	} else {
-		responseServiceURL = "http://response-service.service.consul:6060/response"
+		responseServiceURL = "http://response-service.service.consul:5001/response"
 	}
 
 	// Call the ResponseService

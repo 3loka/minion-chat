@@ -6,7 +6,7 @@ services:
     environment:
       RESPONSE_SERVICE_HOST: responseservice
     ports:
-      - "9999:5050"
+      - "9999:5001"
   response-service:
     image: ${TF_VAR_dockerhub_id}/responseservice:0.0.2
     container_name: responseservice

@@ -105,7 +105,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 4. **Test the Services**:
    - Test **HelloService**:
      ```bash
-     curl http://<ip-of-nomad-client>:5050/hello | jq
+     curl http://<ip-of-nomad-client>:5000/hello | jq
      ```
    - Expected Response:
      ```json
@@ -132,7 +132,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
      curl consul.service.consul:8500
      <a href="/ui/">Moved Permanently</a>.
 
-     curl hello-service.service.consul:5050/hello | jq
+     curl hello-service.service.consul:5000/hello | jq
      {
       "message": "Hello from HelloService!",
       "minion_phrases": [
@@ -146,7 +146,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
       sudo docker pause response-service
 
       # The other response instance shall kick in now
-      curl hello-service.service.consul:5050/hello | jq
+      curl hello-service.service.consul:5000/hello | jq
       {
       "message": "Hello from HelloService!",
       "minion_phrases": [
@@ -160,7 +160,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
       sudo docker unpause response-service
 
       # back to the first response service
-      curl hello-service.service.consul:5050/hello | jq
+      curl hello-service.service.consul:5000/hello | jq
       {
       "message": "Hello from HelloService!",
       "minion_phrases": [

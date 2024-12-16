@@ -99,8 +99,8 @@ resource "aws_security_group" "consul_ui_ingress" {
 
   # minion
   ingress {
-    from_port   = 5050
-    to_port     = 6060
+    from_port   = 5000
+    to_port     = 5001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -223,7 +223,7 @@ resource "aws_instance" "nomad_client" {
     retry_join = var.retry_join
     # for registering with Consul
     consul_ip             = aws_instance.nomad_server.private_ip
-    application_port      = 6060
+    application_port      = 5001
     application_name      = "response-service"
     application_health_ep = "response"
     dockerhub_id          = var.dockerhub_id
