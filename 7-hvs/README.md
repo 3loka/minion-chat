@@ -1,5 +1,5 @@
 
-# Part 3: Nomad Integration
+# Part 7: HVS Integration
 
 ## Background
 Our Hello app is already running with following limitations
