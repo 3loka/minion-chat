@@ -8,7 +8,7 @@ Our Hello app is already running with following limitations
 3. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
 
 ## Overview
-This part introduces Nomad for Application Lifecycle Management for HelloService and ResponseService.
+This part introduces HVS for storing and retrieving static secrets.
 
 ## Prerequisites
 1. **Tools Installed**:
