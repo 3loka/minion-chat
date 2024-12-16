@@ -11,14 +11,14 @@
 # }
 
 output "private_ip" {
-    value = <<CONFIGURATION
-    # Nomad server
-    ${aws_instance.noamd_server.private_ip},
-
-    # Nomad client
-    ${aws_instance.nomad_client[0].private_ip},
-    ${aws_instance.nomad_client[1].private_ip}
-    CONFIGURATION
+    value = {
+      nomad_server = aws_instance.noamd_server.private_ip
+      consul_server = aws_instance.noamd_server.private_ip
+      nomad_clients = [
+        aws_instance.nomad_client[0].private_ip,
+        aws_instance.nomad_client[1].private_ip
+      ]
+      }
 }
 
 output "instance_ids" {
@@ -40,10 +40,33 @@ output "ssh" {
 }
 
 output "ui_urls" {
-  value = <<CONFIGURATION
-    Consul: http://${aws_instance.noamd_server.public_ip}:8500
-    Nomad: http://${aws_instance.noamd_server.public_ip}:4646
-    CONFIGURATION
+  value = {
+    consul =  "http://${aws_instance.noamd_server.public_ip}:8500"
+    nomad =  "http://${aws_instance.noamd_server.public_ip}:4646"
+  }
 }
 
+output "security_group" {
+  value = aws_security_group.consul_ui_ingress.id
+}
 
+output "tls_key" {
+  value = tls_private_key.pk.private_key_pem
+}
+
+output "aws_key_pair_name" {
+  value = aws_key_pair.minion-key.key_name
+}
+
+output "retry_join" {
+  value = var.retry_join
+}
+
+#output "env" {
+#    value = <<CONFIGURATION
+#    export HELLO_SERVICE=${aws_instance.hello_service.public_ip}
+#    export RESPONSE_SERVICE_0=${aws_instance.response_service[0].public_ip}
+#    export RESPONSE_SERVICE_1=${aws_instance.response_service[1].public_ip}
+#    CONFIGURATION
+#}
+#

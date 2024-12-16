@@ -6,6 +6,7 @@ provider "aws" {
 #2.  Modify HelloService and ResponseService to include Consul configuration.
 
 resource "aws_security_group" "consul_ui_ingress" {
+
   name   = "${var.name_prefix}-ui-ingress"
 
   # SSH
@@ -68,6 +69,20 @@ resource "aws_security_group" "consul_ui_ingress" {
     cidr_blocks     = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port       = 5000
+    to_port         = 5000
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = 5001
+    to_port         = 5001
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
   # allow_all_internal_traffic
   ingress {
     from_port = 0
@@ -117,6 +132,7 @@ resource "aws_instance" "noamd_server" {
     region                    = var.region
     cloud_env                 = "aws"
     retry_join                = var.retry_join
+    vault_token = var.vault_token
   })
 
   vpc_security_group_ids = [aws_security_group.consul_ui_ingress.id]

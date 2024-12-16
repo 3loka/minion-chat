@@ -15,7 +15,7 @@ client {
 }
 
 acl {
-  enabled = true
+  enabled = false
 }
 
 consul {
