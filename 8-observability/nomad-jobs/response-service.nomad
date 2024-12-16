@@ -18,7 +18,7 @@ job "response-service" {
       driver = "docker"
 
       config {
-        image = "abbycke/responseservice:latest"
+        image = "abbycke/responseservice:0.0.2"
         ports = ["http"]
       }
 

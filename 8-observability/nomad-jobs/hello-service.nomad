@@ -18,7 +18,7 @@ job "hello-service" {
       driver = "docker"
 
       config {
-        image = "abbycke/helloservice:latest"
+        image = "abbycke/helloservice:0.0.2"
         ports = ["http"]
       }
 

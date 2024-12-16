@@ -154,6 +154,12 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 	span.SetAttributes(semconv.HTTPStatusCodeKey.Int(http.StatusOK))
 }
 
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "healthy"})
+}
+
 func main() {
 	initTracer()
 
@@ -161,6 +167,8 @@ func main() {
 
 	http.HandleFunc("/hello", helloHandler)
 
-	fmt.Println("HelloService running on port 5050...")
-	log.Fatal(http.ListenAndServe(":5050", nil))
+	http.HandleFunc("/health", healthHandler)
+
+	fmt.Println("HelloService running on port 5000...")
+	log.Fatal(http.ListenAndServe(":5000", nil))
 }

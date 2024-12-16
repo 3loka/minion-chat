@@ -176,6 +176,12 @@ func getMinionPhrases(ctx context.Context) ([]string, error) {
 	return phrases, nil
 }
 
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "healthy"})
+}
+
 func main() {
 	initTracer()
 
@@ -183,6 +189,8 @@ func main() {
 
 	http.HandleFunc("/response", responseHandler)
 
-	fmt.Println("ResponseService running on port 6060...")
-	log.Fatal(http.ListenAndServe(":6060", nil))
+	http.HandleFunc("/health", healthHandler)
+
+	fmt.Println("ResponseService running on port 5001...")
+	log.Fatal(http.ListenAndServe(":5001", nil))
 }
