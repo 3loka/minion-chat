@@ -14,6 +14,7 @@ cd /ops
 
 CONFIGDIR=/ops/shared/config
 CONSULVERSION=1.18.2
+NOMADVERSION=1.9.3
 
 sudo apt-get install -y software-properties-common
 
@@ -43,8 +44,7 @@ echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://
 	# vault=$VAULTVERSION* \
 	# consul-template=$CONSULTEMPLATEVERSION*
 
-# Install Consul only
-sudo apt-get update && sudo apt-get -y install consul=$CONSULVERSION*
-
-sudo docker image pull $DOCKERHUB_ID/helloservice:latest
-sudo docker image pull $DOCKERHUB_ID/responseservice:latest
+# Install HashiStack Packages
+sudo apt-get update && sudo apt-get -y install \
+	consul=$CONSULVERSION* \
+	nomad=$NOMADVERSION*

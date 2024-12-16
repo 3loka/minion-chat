@@ -5,6 +5,7 @@ set -e
 CONFIGDIR=/ops/shared/config
 
 CONSULCONFIGDIR=/etc/consul.d
+NOMADCONFIGDIR=/etc/nomad.d
 HOME_DIR=ubuntu
 
 # Wait for network
@@ -13,6 +14,7 @@ sleep 15
 DOCKER_BRIDGE_IP_ADDRESS=(`ip -brief addr show docker0 | awk '{print $3}' | awk -F/ '{print $1}'`)
 CLOUD=$1
 RETRY_JOIN=$2
+CONSUL_IP=$3
 
 # Get IP from metadata service
 case $CLOUD in
@@ -43,9 +45,24 @@ sudo cp $CONFIGDIR/consul_client.hcl $CONSULCONFIGDIR/consul.hcl
 sudo systemctl enable consul.service&& sleep 1
 sudo systemctl start consul.service && sleep 10
 
+# Nomad
+sed -i "s/CONSUL_SERVER_IP/$CONSUL_IP/g" $CONFIGDIR/nomad_client.hcl
+sudo rm -f $NOMADCONFIGDIR/nomad.hcl
+sudo cp $CONFIGDIR/nomad_client.hcl $NOMADCONFIGDIR/nomad.hcl
+
 # Install and link CNI Plugins to support Consul Connect-Enabled jobs
-sudo apt install -y containernetworking-plugins
-sudo mkdir /opt/cni && sudo  ln -s /usr/lib/cni /opt/cni/bin
+# sudo apt install -y containernetworking-plugins
+# sudo mkdir -p /opt/cni && sudo  ln -s /usr/lib/cni /opt/cni/bin
+ARCH_CNI=$( [ $(uname -m) = aarch64 ] && echo arm64 || echo amd64)
+CNI_PLUGIN_VERSION=v1.5.1
+curl -L -o cni-plugins.tgz "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-linux-${ARCH_CNI}-${CNI_PLUGIN_VERSION}".tgz && \
+sudo mkdir -p /opt/cni/bin && \
+sudo tar -C /opt/cni/bin -xzf cni-plugins.tgz
+
+sudo systemctl enable nomad.service
+sudo systemctl start nomad.service
+sleep 10
+export NOMAD_ADDR=http://$IP_ADDRESS:4646
 
 
 # Add hostname to /etc/hosts
@@ -57,3 +74,7 @@ sed -i "s/DOCKER_BRIDGE_IP_ADDRESS/$DOCKER_BRIDGE_IP_ADDRESS/g" $CONFIGDIR/consu
 sudo mkdir -p /etc/systemd/resolved.conf.d/
 sudo cp $CONFIGDIR/consul-systemd-resolved.conf /etc/systemd/resolved.conf.d/consul.conf
 sudo systemctl restart systemd-resolved
+
+# Set env vars for tool CLIs
+echo "export NOMAD_ADDR=http://$IP_ADDRESS:4646" | sudo tee --append /home/$HOME_DIR/.bashrc
+echo "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre"  | sudo tee --append /home/$HOME_DIR/.bashrc

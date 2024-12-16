@@ -18,14 +18,17 @@ job "response-service" {
       driver = "docker"
 
       config {
-        image = "srahul3/responseservice:latest"
+        image = "absolutelightning/responseservice:latest"
         ports = ["http"]
       }
 
       env {
         TF_VAR_dockerhub_id = ""
+        HCP_ORGANIZATION_ID = ""
+        HCP_PROJECT_ID      = ""
+        HCP_CLIENT_ID       = ""
+        HCP_CLIENT_SECRET   = ""
       }
-
 
       service {
         name = "response-service"

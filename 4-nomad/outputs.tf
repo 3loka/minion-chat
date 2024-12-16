@@ -52,6 +52,7 @@ output "security_group" {
 
 output "tls_key" {
   value = tls_private_key.pk.private_key_pem
+  sensitive = true
 }
 
 output "aws_key_pair_name" {

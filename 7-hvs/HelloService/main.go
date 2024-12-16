@@ -8,14 +8,14 @@ import (
 )
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
-	resp, err := http.Get("http://response-service.service.consul:5001/response") // Static URL
+	resp, err := http.Get("http://response-service.service.consul:6060/response") // Static URL
 	if err != nil {
 		http.Error(w, "Failed to contact ResponseService", http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
 
-	var response map[string]interface{}
+	response := make(map[string]interface{})
 	json.NewDecoder(resp.Body).Decode(&response)
 
 	response["message"] = "Hello from HelloService!"
@@ -25,6 +25,6 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/hello", helloHandler)
-	fmt.Println("HelloService running on port 5000...")
-	log.Fatal(http.ListenAndServe(":5000", nil))
+	fmt.Println("HelloService running on port 5050...")
+	log.Fatal(http.ListenAndServe(":5050", nil))
 }

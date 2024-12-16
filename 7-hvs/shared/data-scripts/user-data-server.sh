@@ -3,7 +3,7 @@
 set -e
 
 exec > >(sudo tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-sudo bash /ops/shared/scripts/server.sh "${cloud_env}" "${server_count}" "${retry_join}"
+sudo bash /ops/shared/scripts/server.sh "${cloud_env}" "${retry_join}"
 
 
 CLOUD_ENV="${cloud_env}"
@@ -16,7 +16,12 @@ PRIVATE_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://instance-data/lat
 sed -i "s/IP_ADDRESS/$PRIVATE_IP/g" /etc/consul.d/consul.hcl
 sed -i "s/SERVER_COUNT/${server_count}/g" /etc/consul.d/consul.hcl
 
+sed -i "s/IP_ADDRESS/$PRIVATE_IP/g" /etc/nomad.d/nomad.hcl
+sed -i "s/VAULT_TOKEN/${vault_token}/g" /etc/nomad.d/nomad.hcl
+
 sudo systemctl restart consul.service
+sudo systemctl enable nomad.service
+sudo systemctl restart nomad.service
 
 wait 10
 
