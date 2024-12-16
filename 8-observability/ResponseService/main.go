@@ -129,14 +129,13 @@ func responseHandler(w http.ResponseWriter, r *http.Request) {
 			"response_message": "Bello from ResponseService!",
 			"minion_phrases":   phrases,
 		}
+		successfulResponses.Inc() // Increment successful responses
 	}
 
 	// Add instance ID to response if available
 	if instanceID := os.Getenv("INSTANCE_ID"); instanceID != "" {
 		response["response_message"] = fmt.Sprintf("Bello from ResponseService %s!", instanceID)
 	}
-
-	successfulResponses.Inc() // Increment successful responses
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
