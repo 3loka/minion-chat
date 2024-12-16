@@ -23,7 +23,7 @@ job "response-service" {
       }
 
       env {
-        TF_VAR_dockerhub_id = "${TF_VAR_dockerhub_id}"
+        TF_VAR_dockerhub_id = ""
       }
 
 

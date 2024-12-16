@@ -134,7 +134,7 @@ This part introduces Nomad for Application Lifecycle Management for HelloService
    ```
 
 6. **Nomad jobs**
-   Access the Nomad UI and add below to jobs. Copy the content of the job and paste it New Job of Nomad UI.
+   Access the Nomad UI and add below to jobs. Copy the content of the job, and update env variables and paste it New Job of Nomad UI.
 
    4-nomad/nomad-jobs/hello-service.nomad
    4-nomad/nomad-jobs/response-service.nomad
