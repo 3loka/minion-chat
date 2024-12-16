@@ -2,51 +2,56 @@
 # Part 2: Say Hello to terrafom and AWS
 
 ## Background
+
 Our Hello app is already running with following limitations
 1. **Unreliable Infrastructure**: Single-instance services with hardcoded IPs.
-2. **Lack of High Availability**: Only one instance of each service.
-3. **Limited Scalability**: Static setup not suitable for scaling.
-4. **No Fault Tolerance**: Services may fail without recovery mechanisms.
-5. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
-6. **Rigid Deployment**: Fixed configurations with minimal flexibility.
+2. **No release Package**: Code is deployed directly by compiling code. This limits the Portability, Env Consistencey, Faster Deployment, Scalability, Isolation, Enhanced Security, Version Controlled...
+3. **Lack of High Availability**: Only one instance of each service.
+4. **Limited Scalability**: Hardcoded IPs makes the setup extremly difficult to `scale-up`, `scale-down`.
+5. **No Fault Tolerance**: Services may fail without recovery mechanisms.
+6. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
+7. **Rigid Deployment**: Fixed configurations with minimal flexibility.
 
 
 ## Overview
 We will be targetting to solve the problem of unreliable infra by deploying this app in AWS cloud.
 
-### Reliable infrastructure
-- We will use AWS Cloud platform to lift and shift our application
-
-### Complexity of managing the deployment on cloud
-- We will make use of simple Terraform to spinup the infra required for the application.
-
+The other big Challenge with using cloud is Infrastructure Management.
 #### List if infrastructure items
 - Auto selecting the latest ubuntu image.
 - Creating Security Group with ingress and egress defined.
 - 2 AWS Instance to host the application with docker installed
 - One private key to SSH the two AWS Instance
 - Inject the environment variable `TF_VAR_dockerhub_id` into Response Service
+- Configuring and intalling necessary applications.
 - (We will do it manually) Auto running the application
 
----
-
-## Prerequisites
-1. **Tools Installed**:
-   - Terraform CLI
-   - jq CLI
-2. **AWS Setup** (For AWS deployment):
-   - An AWS account with access keys configured.
+# Proposal
+AWS Cloud platformn provides a reliable infrasture but there are lot of componets and configurations to manage manually. Terraform is popular IAC platform to manage the infrastructure as a code.
 
 ---
 
 ## Infrastructure on AWS
 
-### 1. **Navigate to the project folder**
+### 1. **Understanding Terraform**
+Terraform is an Infrastructure as Code (IaC) tool developed by HashiCorp. It allows you to define, provision, and manage cloud infrastructure using declarative configuration files. Terraform is cloud-agnostic and can manage infrastructure for major providers like AWS, Azure, GCP, etc., as well as on-prem solutions.
+
+Here’s a breakdown of the three main files often used in a Terraform project:
+
+1. **main.tf**
+This is the core file where you define the infrastructure resources. It includes the provider configuration, resource blocks, and possibly some modules. It essentially describes what infrastructure you want.
+
+2. **variables.tf**
+This file is used to declare variables that can be referenced in the main.tf file. Variables allow for flexible and reusable configurations.
+
+3. **output.tf**
+This file defines outputs that Terraform will display after applying the configuration. Outputs are useful for retrieving information about created resources.
+
+### 2. **Setup and AWS Auth**
 ```bash
 cd 2-terraform
 ```
 
-### 2. **Setup and Auth**
 Open a terminal and run below commands in sequence
 ```bash
 
@@ -170,5 +175,7 @@ Expected Output:
 2. **Limited Availability**: Hardcoded IPs makes the setup extremly difficult to `scale-up`, `scale-down`, hence application is not HA.
 3. **Limited Scalability**: Hardcoded IPs makes the setup extremly difficult to `scale-up`, `scale-down`.
 4. **No Fault Tolerance**: Services may fail without recovery mechanisms.
-5. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
-6. **Rigid Deployment**: Fixed configurations with minimal flexibility.
+5. **Hardcoded responses**: There is need for a persistent store for the application to generate the response dynamically without changing the code everytime.
+6. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
+7. **Manual Application Management**: Application lifecycle is difficult to maintain using terraform/manually. The compute is not utilized efficiently.
+8. **Lack of Resource Optimization** One AWS Instance per Service Instance is not the efficient and cost effective way to run production.
