@@ -1,141 +1,117 @@
 
-# Part 8: Platform Integration: To prod and beyond 🚀 
+# Monitoring & Alerting Setup
 
-## Overview
-This part introduces Consul for service discovery, and fault tollerance for HelloService and ResponseService.
+Welcome to the workshop! 🚀 In this hands-on guide, you'll be setting up a full monitoring and alerting stack on Nomad using Prometheus, Grafana, and Alertmanager. By the end of this setup, you'll have a complete monitoring solution in place, with real-time alerting and escalations.
 
-## Prerequisites
-1. **Tools Installed**:
-   - Terraform CLI
-   - jq cli `brew install jq`
-   - Packer CLI
-   - Docker CLI
-2. **Packer generated AMI** (Pre-baked AMI with Consul Server, Consul Client, Docker Images, DNS Configuration):
-   - An AWS account with access keys configured.
-3. **Docker Images**
-   - Docker images compiled in this step and are available on docker-hub.
+## 🛠 Prerequisites
+Before we begin, make sure you have:
+1. **Nomad** and **Consul** installed and running.
+2. Access to **Nomad UI** for deploying and managing jobs.
+3. **hello-service** and **response-service** deployed on nomad.
 
-## Steps to Run
+## 📦 What You'll Be Setting Up
+We’ll be deploying the following components using a single Nomad job:
+- **Prometheus** (port: `9090`) – Scrapes metrics and triggers alerts.
+- **Grafana** (port: `3000`) – Visualizes metrics via dashboards.
+- **Alertmanager** (port: `9093`) – Handles alerts and escalates them to a webhook.
 
-1. **Navigate to the Part 8 directory**:
-   ```bash
-   cd 8-observability
-   ```
+## 🎯 Monitoring Targets
+We’ll monitor:
+- `hello-service` – A custom web app.
+- `response-service` – Another web app, also backend for hello-service.
+- **Nomad** and **Consul** metrics.
+- Plus, we’ll configure **alert rules** and **webhook notifications** for real-time alerting.
 
-2. **Building AMI using Packer**
-   ```bash
-   packer init -var-file=variables.hcl image.pkr.hcl
-   packer build -var-file=variables.hcl image.pkr.hcl
-   ```
+## 🚀 Step-by-Step Setup
 
-   Record the AMI id, we will need it in next step
+### 1. Deploy the Monitoring Stack
+Let’s deploy the monitoring stack on **Nomad**.
 
-3. **Push Docker Images to Docker Hub**
-   If necessary, update the tags from the docker-compose.yml.
+1. Open **Nomad UI**.
+2. Go to **Jobs > Run Job**.
+3. Paste the contents of `monitoring-stack.nomad` into the job submission form.
+4. Hit **Submit**!
 
-   Open a new terminal to build docker and set the following env
+Now, sit back and let Nomad launch the monitoring stack for you! 🔥
 
-   ```bash
-   # Set up Docker Hub credentials  
-   export TF_VAR_dockerhub_id=<dockerhub-id>
-   curl -L https://hub.docker.com/v2/orgs/$TF_VAR_dockerhub_id | jq
-   # make sure you see your account information in response
+---
 
-   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose build
-   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
+### 2. Configure Prometheus
 
-   ```
+Prometheus scrapes metrics from the following targets:
+- **Consul**: `consul.service.consul:8500`
+- **Nomad**: `nomad.service.consul:4646`
+- **hello-service**: `hello-service.service.consul:5050`
+- **response-service**: `response-service.service.consul:5055`
 
-4. **Code Changes**
-   We will be modifying the code we built for step 4 and adding some wings to it.
-   Right now we don't know what goes with our application at any moment without any manual interventions. That too, very limited information.
-   In this step we will be adding couple of lines of not-so-scaringly code blocks to our application responseservice as well as helloservice which will
-   help it to emit some state information. This can include metrics related to requests served, tracing information containing the request path etc.,
+The Prometheus config is defined in `prometheus.yml`. To view the metrics:
+- Open **Prometheus** at: `http://<nomad-server-ip>:9090`.
+- Explore the available targets under **Status > Targets**.
 
-   You may compare the code under `./HelloService/main.go` with `4-nomad/HelloService/main.go` to understand what all metrics and tracing information has been instrumented.
+---
 
-5. **Deloyment**
-   
-   **Update variables.hcl acordingly. Sepecially the `ami`**
-   ```hcl
-   # Packer variables (all are required)
-   region                    = "us-east-1"
-   dockerhub_id              = "<your-dockerhub-ID>"
+### 3. Visualize Metrics in Grafana
 
-   # Terraform variables (all are required)
-   ami                       = "<your-ami-from-previous-step>"
+Let’s make those metrics beautiful! 🎨
 
-   name_prefix               = "minion"
-   response_service_count    = 2
-   ```
-   
-   **Run following command**
-   ```bash
-   terraform init
-   terraform apply -var-file=variables.hcl
-   ```
-   Response
-   ```
-   Outputs:
+1. Open **Grafana** at: `http://<nomad-server-ip>:3000`.
+2. Import pre-built dashboards:
+    - Go to **Dashboards > Import**.
+    - Upload the JSON files from the `grafana-dashboards` folder.
+3. You’ll now see real-time metrics for **Nomad**, **Consul**, **hello-service**, and **response-service**.
 
-   instance_ids = <<EOT
-      i-04bdda5b8fb6acb37,
-      i-06b5c92a418169db2
+---
 
-   EOT
-   private_ip = <<EOT
-      # Nomad server
-      172.31.25.61,
+### 4. Set Up Alerting with Alertmanager
 
-      # Nomad client
-      172.31.16.189,
-      172.31.29.204
+Now let’s configure alerting rules to notify us when something goes wrong.
 
-   EOT
-   ssh = <<EOT
-      # Nomad server
-      ssh -i "minion-key.pem" ubuntu@23.22.218.131
+Alertmanager is already provisioned to handle alerts from Prometheus and send them to a webhook.
 
-      # Nomad client
-      ssh -i "minion-key.pem" ubuntu@3.94.166.246
-      ssh -i "minion-key.pem" ubuntu@34.229.194.154
+You can access **Alertmanager UI** at: `http://<nomad-server-ip>:9093`
 
-   EOT
-   ui_urls = <<EOT
-      Consul Server: http://23.22.218.131:8500
-      Nomad Server: http://23.22.218.131:4646
-   EOT
-   ```
+Here’s an example alert rule:
+- **Alert**: `InstanceDown`
+- **Condition**: If `response-service` is down for more than 2 minutes, an alert is triggered.
 
-6. Add each of the nomad jobs under `nomad-jobs/*` to the nomad server.
+When the alert is triggered, Alertmanager will send a notification to a webhook URL (`https://webhook.site/73961b6f-bb10-44d3-9268-7fd51b71bd01`). You can monitor this in real-time.
 
-7. **Testing Servers**:
-   - Make sure Consul UI and Nomad UI and loading
-   - Make sure Nomad shows two client
-   - Make sure Consul services are healthy
-   - Make sure you can access prometheus UI, Grafana UI, Jaeger UI etc.,
+---
 
+### 5. Simulate an Alert 🚨
 
-8. **Test the Services**:
+Let’s trigger an alert to see how the system reacts.
 
-   You can directly visit the URL: http://<ip-of-nomad-client>:5000/hello on browser or follow:
-   - Test **HelloService**:
-     ```bash
-     curl http://<ip-of-nomad-client>:5000/hello | jq
-     ```
-   - Expected Response:
-     ```json
-     {
-      "message": "Hello from HelloService!",
-      "minion_phrases": [
-         "Bello!",
-         "Poopaye!",
-         "Tulaliloo ti amo!"
-      ],
-      "response_message": "Bello from ResponseService"
-     }
-     ```
+1. **Stop `response-service`**:
+    - In Nomad UI, stop the `response-service` job.
+2. **Watch the alert**:
+    - Prometheus will notice that the service is down.
+    - An alert will be triggered and sent to Alertmanager.
+    - Check the alert notification at the [webhook site](https://webhook.site/#!/view/73961b6f-bb10-44d3-9268-7fd51b71bd01/4e268ed7-dfba-4db3-ae06-cc9a2617413b/1).
 
+Pretty cool, right? 😎
 
-## Key Points
-- Observability enables us to monitor our application stack 24*7 with carefully crafted alerts and playbooks which will enable our app to serve customer requests with maximum availablity.
+---
+
+## 🎉 Full End-to-End Flow
+
+1. **Metrics Exposure**: `hello-service` and `response-service` expose metrics.
+2. **Prometheus**: Scrapes these metrics, as well as those from Nomad and Consul.
+3. **Grafana**: Visualizes the metrics in real-time using beautiful dashboards.
+4. **Prometheus Alerts**: Prometheus triggers an alert when conditions are met.
+5. **Alertmanager Escalation**: Alertmanager forwards the alert to the webhook URL for further action.
+
+---
+
+## 💡 Conclusion
+
+By now, you have a fully functional monitoring setup, capable of visualizing metrics and sending real-time alerts! Keep experimenting by tweaking alert rules, adding more targets, or even exploring different visualization options in Grafana.
+
+Happy Monitoring! 🎉🚀
+
+---
+
+## Useful Resources
+- [Prometheus Documentation](https://prometheus.io/docs/introduction/overview/)
+- [Grafana Documentation](https://grafana.com/docs/grafana/latest/)
+- [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/)
