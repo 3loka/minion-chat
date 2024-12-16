@@ -8,15 +8,16 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 1. **Tools Installed**:
    - Terraform CLI
    - jq cli `brew install jq`
-   - Packer cli
+   - Packer CLI
+   - Docker CLI
 2. **Packer generated AMI** (Pre-baked AMI with Consul Server, Consul Client, Docker Images, DNS Configuration):
    - An AWS account with access keys configured.
 3. **Docker Images**
-   - Docker images compiled in last activity and available on docker-hub
+   - Docker images compiled in this step and are available on docker-hub.
 
 ## Steps to Run
 
-1. **Navigate to the Part 2 directory**:
+1. **Navigate to the Part 8 directory**:
    ```bash
    cd 8-observability
    ```
@@ -29,13 +30,37 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 
    Record the AMI id, we will need it in next step
 
-3. **Deloyment**
+3. **Push Docker Images to Docker Hub**
+   If necessary, update the tags from the docker-compose.yml.
+
+   Open a new terminal to build docker and set the following env
+
+   ```bash
+   # Set up Docker Hub credentials  
+   export TF_VAR_dockerhub_id=<dockerhub-id>
+   curl -L https://hub.docker.com/v2/orgs/$TF_VAR_dockerhub_id | jq
+   # make sure you see your account information in response
+
+   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose build
+   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
+
+   ```
+
+4. **Code Changes**
+   We will be modifying the code we built for step 4 and adding some wings to it.
+   Right now we don't know what goes with our application at any moment without any manual interventions. That too, very limited information.
+   In this step we will be adding couple of lines of not-so-scaringly code blocks to our application responseservice as well as helloservice which will
+   help it to emit some state information. This can include metrics related to requests served, tracing information containing the request path etc.,
+
+   You may compare the code under `./HelloService/main.go` with `4-nomad/HelloService/main.go` to understand what all metrics and tracing information has been instrumented.
+
+5. **Deloyment**
    
    **Update variables.hcl acordingly. Sepecially the `ami`**
    ```hcl
    # Packer variables (all are required)
    region                    = "us-east-1"
-   dockerhub_id              = "srahul3"
+   dockerhub_id              = "<your-dockerhub-ID>"
 
    # Terraform variables (all are required)
    ami                       = "<your-ami-from-previous-step>"
@@ -81,28 +106,19 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
       Nomad Server: http://23.22.218.131:4646
    EOT
    ```
-4. **Testing Servers**:
+
+6. Add each of the nomad jobs under `nomad-jobs/*` to the nomad server.
+
+7. **Testing Servers**:
    - Make sure Consul UI and Nomad UI and loading
    - Make sure Nomad shows two client
    - Make sure Consul services are healthy
-
-5. **Adding Minion phrase ion Consul KV**
-
-   SSH into first Nomad client and run below command(s)
-
-   Verify the docker bridge ip by running below command
-   ```sh
-   ip -brief addr show docker0 | awk '{print $3}' | awk -F/ '{print $1}'
-   ```
-
-   :warning: Warning: If you see the result of above command other than `172.17.0.1`, then update that IP in nomad jobs.
-
-   ```sh
-   curl --request PUT --data '["Bello!", "Poopaye!", "Tulaliloo ti amo!"]' http://consul.service.consul:8500/v1/kv/minion_phrases
-   ```
+   - Make sure you can access prometheus UI, Grafana UI, Jaeger UI etc.,
 
 
-4. **Test the Services**:
+8. **Test the Services**:
+
+   You can directly visit the URL: http://<ip-of-nomad-client>:5000/hello on browser or follow:
    - Test **HelloService**:
      ```bash
      curl http://<ip-of-nomad-client>:5000/hello | jq
@@ -120,60 +136,6 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
      }
      ```
 
-5. **Access Consul UI**:
-   - Open the Consul UI in a browser:
-     ```plaintext
-     http://localhost:8500
-     ```
-6. **SSH to the 1st Response Service**:
-   - use ssh command suggested in terraform output and connect to the instance suggested by `Hello Service response`
-   - Testing DNS:
-     ```bash
-     curl consul.service.consul:8500
-     <a href="/ui/">Moved Permanently</a>.
-
-     curl hello-service.service.consul:5000/hello | jq
-     {
-      "message": "Hello from HelloService!",
-      "minion_phrases": [
-         "Bello!",
-         "Poopaye!",
-         "Tulaliloo ti amo!"
-      ],
-      "response_message": "Bello from ResponseService"
-      }
-
-      sudo docker pause response-service
-
-      # The other response instance shall kick in now
-      curl hello-service.service.consul:5000/hello | jq
-      {
-      "message": "Hello from HelloService!",
-      "minion_phrases": [
-         "Bello!",
-         "Poopaye!",
-         "Tulaliloo ti amo!"
-      ],
-      "response_message": "Bello from ResponseService i-0a5e388ad2762ec84!"
-      }
-
-      sudo docker unpause response-service
-
-      # back to the first response service
-      curl hello-service.service.consul:5000/hello | jq
-      {
-      "message": "Hello from HelloService!",
-      "minion_phrases": [
-         "Bello!",
-         "Poopaye!",
-         "Tulaliloo ti amo!"
-      ],
-      "response_message": "Bello from ResponseService i-05506b6e36d25223a!"
-      }
-     ```
-7. **DIY**:
-   - Add the remaining job files to nomad and run
 
 ## Key Points
-- SLI/SLO
-- More to add
+- Observability enables us to monitor our application stack 24*7 with carefully crafted alerts and playbooks which will enable our app to serve customer requests with maximum availablity.
