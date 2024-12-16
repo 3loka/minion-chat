@@ -42,7 +42,7 @@ Prometheus scrapes metrics from the following targets:
 - **Consul**: `consul.service.consul:8500`
 - **Nomad**: `nomad.service.consul:4646`
 - **hello-service**: `hello-service.service.consul:5050`
-- **response-service**: `response-service.service.consul:5055`
+- **response-service**: `response-service.service.consul:6060`
 
 The Prometheus config is defined in `prometheus.yml`. To view the metrics:
 - Open **Prometheus** at: `http://<nomad-server-ip>:9090`.
