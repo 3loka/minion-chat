@@ -28,7 +28,7 @@ job "hello-service" {
 
         check {
           type     = "http"
-          path     = "/hello"
+          path     = "/health"
           interval = "10s"
           timeout  = "2s"
         }

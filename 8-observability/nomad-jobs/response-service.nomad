@@ -28,7 +28,7 @@ job "response-service" {
 
         check {
           type     = "http"
-          path     = "/response"
+          path     = "/health"
           interval = "10s"
           timeout  = "2s"
         }
