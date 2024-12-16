@@ -1,48 +1,58 @@
 
 # Steps to Run Part 1 (Basic Setup)
 
+## Background
+<img src="resources/image.png" alt="drawing" style="width:200px;"/>
+
+
+Kevin, our minion friend, wants to deploy a Hello app that will be accessible to other Minion friends over the internet.
+
+<img src="resources/image2.png" alt="drawing" style="width:200px;"/>
+
+
 ## Overview
-In **Part 1**, we deploy two simple microservices, HelloService and ResponseService, to demonstrate basic inter-service communication. 
-HelloService acts as the primary entry point, handling requests to its /hello endpoint. 
-It fetches a response from ResponseService at its /response endpoint and combines the messages into a single JSON output.
-HelloService returns a friendly message "Hello from HelloService!" alongside the "Bello from ResponseService!" response received from ResponseService.
-The two services communicate using static IPs and ports, showcasing the foundational setup for microservices without involving advanced tools like Consul 
-for service discovery or Nomad for orchestration.
+This setup involves deploying two simple microservices, **HelloService** and **ResponseService**, to demonstrate basic inter-service communication:  
+- **HelloService** serves as the entry point, handling requests to its `/hello` endpoint. It retrieves a message from **ResponseService** at its `/response` endpoint and combines the two messages into a single JSON response.
+  
+- **HelloService** returns:  
+  `"Hello from HelloService!"`  
+  along with the response from ResponseService:  
+  `"Bello from ResponseService!"`
+
+These services communicate using static IPs and ports, highlighting the foundational concepts of microservice architecture.
 
 ---
 
 ## Prerequisites
-1. **Tools Installed**:
-   - Docker and Docker Compose(For local setup)
-   - jq cli `brew install jq`
+Ensure you have the following tools installed:  
+- `jq` CLI  
+- `golang`  
+- `curl` CLI  
+- `gh` CLI  
 
 ---
 
 ## Running Locally
 
-### **Prerequisites**
-Ensure Docker is installed along with docker-compose and running on your machine.
-
-```sh
-export TF_VAR_dockerhub_id=<dockerhub-id>
-curl -L https://hub.docker.com/v2/orgs/$TF_VAR_dockerhub_id | jq
-# make sure you see your account information in resposne
-```
-
 ### **Step-by-Step Guide**
 
-#### 1. **Navigate to the Project Directory**
-Navigate to the directory containing the `main.go` files for HelloService and ResponseService.
-
 ```bash
+# Clone the repository
+mkdir -p ~/git && cd ~/git
+gh repo clone 3loka/minion-chat
+cd ./minion-chat
+
+# Set up Docker Hub credentials
+export TF_VAR_dockerhub_id=<dockerhub-id>
+curl -L https://hub.docker.com/v2/orgs/$TF_VAR_dockerhub_id | jq
+# make sure you see your account information in response
+
+# Start the services
 cd 1-local-setup
-```
+go run ./HelloService/main.go > /dev/null 2>&1 &
+go run ./ResponseService/main.go > /dev/null 2>&1 &
 
-#### 2. **Build and Run Docker Images**
-Build Docker images for HelloService and ResponseService.
 
-```bash
-docker-compose up
 ```
 
 #### 3. **Test the Services**
@@ -50,7 +60,7 @@ docker-compose up
 1. **Test HelloService**:
    Open a terminal and run:
    ```bash
-   curl http://localhost:9999/hello | jq
+   curl http://localhost:5050/hello | jq
    ```
    Expected Output:
    ```json
@@ -63,7 +73,7 @@ docker-compose up
 2. **Test ResponseService**:
    Open a terminal and run:
    ```bash
-   curl http://localhost:5001/response | jq
+   curl http://localhost:6060/response | jq
    ```
    Expected Output:
    ```json
@@ -72,55 +82,31 @@ docker-compose up
    }
    ```
 
-#### 4. **Verify and Debug**
-- Check the running Docker containers:
-  ```bash
-  docker ps
-  ```
-- View container logs:
-  ```bash
-  docker logs <container-id>
-  ```
-
 #### 5. **Stop and Cleanup**
 To stop and remove the running containers:
 ```bash
-docker-compose stop
-```
+# Find and kill the running services
+jobs -l
+kill <pid>
 
-#### 6. **Push Docker Images to Docker Hub**
+lsof -i :5050
+kill <pid>
 
-```bash
-DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose build
-DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
+lsof -i :6060
+kill <pid>
 ```
 
 ---
 
-## Why This Setup?
+## Take aways?
+  • Simple Learning: Demonstrates inter-service communication without introducing complex tools or concepts.
 
-  • Simple Learning:
-  • Demonstrates inter-service communication without introducing complex tools or concepts.
-  • Foundation:
-  • Sets up the base infrastructure to expand upon in future parts, where dynamic service discovery and orchestration will be introduced.
 
 ## Limitations
-
-  1.  Static IPs and Ports:
-  • The hardcoded configuration makes scaling and dynamic updates difficult.
-  • It’s not suitable for production environments where services may move between nodes or instances.
-  2.  No Load Balancing:
-  • Requests to ResponseService always go to a single, predefined address.
-  3.  No Security:
-  • No authentication, encryption, or secure communication is configured between the services.
-
-## Next Steps
-
-In subsequent parts, we address these limitations by:
-
-  • Introducing Packer: To create reusable AMIs with pre-installed dependencies, simplifying deployment and ensuring consistency.
-  • Adding Consul: For dynamic service discovery, allowing services to locate and communicate with each other without hardcoding static IPs (Part 2).
-  • Integrating Nomad: For orchestration and scaling, enabling efficient deployment and management of services across multiple nodes (Part 3).
-  • Utilizing Vault: For secure secret management, dynamically generating and securely distributing secrets like database credentials (Part 4).
-
-This incremental approach demonstrates how to evolve a simple microservice setup into a robust, production-ready system.
+1. **Unreliable Infrastructure**: Single-instance services with hardcoded IPs.
+2. **No release Package**: Code is deployed directly by compiling code. This limits the Portability, Env Consistencey, Faster Deployment, Scalability, Isolation, Enhanced Security, Version Controlled...
+3. **Lack of High Availability**: Only one instance of each service.
+4. **Limited Scalability**: Hardcoded IPs makes the setup extremly difficult to `scale-up`, `scale-down`.
+5. **No Fault Tolerance**: Services may fail without recovery mechanisms.
+6. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
+7. **Rigid Deployment**: Fixed configurations with minimal flexibility.

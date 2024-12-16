@@ -19,7 +19,7 @@ func responseHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 	// register your progress in leadership board
-	err := registerProgress("garage")
+	err := registerProgress("terraform")
 	if err != nil {
 		// set http status code to 500
 		http.Error(w, fmt.Sprintf("Failed to register progress %v", err), http.StatusInternalServerError)
@@ -27,6 +27,7 @@ func responseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Register progress in leadership board
 func registerProgress(game string) error {
 	// register progress in leadership board
 	url := "http://leaderboard.ashesh-vidyut.sbx.hashidemos.io/api/"

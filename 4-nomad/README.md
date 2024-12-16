@@ -1,18 +1,22 @@
 
-# Part 3: Consul Integration
+# Part 3: Nomad Integration
+
+## Background
+Our Hello app is already running with following limitations
+1. **Manual Application Management**: Application lifecycle is difficult to maintain using terraform/manually. The compute is not utilized efficiently.
+2. **Lack of Resource Optimization** One AWS Instance per Service Instance is not the efficient and cost effective way to run production.
+3. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
 
 ## Overview
-This part introduces Consul for service discovery, and fault tollerance for HelloService and ResponseService.
+This part introduces Nomad for Application Lifecycle Management for HelloService and ResponseService.
 
 ## Prerequisites
 1. **Tools Installed**:
    - Terraform CLI
-   - jq cli `brew install jq`
-   - Packer cli
+   - jq CLI
+   - Packer CLI
 2. **Packer generated AMI** (Pre-baked AMI with Consul Server, Consul Client, Docker Images, DNS Configuration):
    - An AWS account with access keys configured.
-3. **Docker Images**
-   - Docker images compiled in last activity and available on docker-hub
 
 ## Steps to Run
 
@@ -29,13 +33,41 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 
    Record the AMI id, we will need it in next step
 
-3. **Deloyment**
+3. **Code Update**
+   Nomad auto registers the Service Instances to consul so we need to delete most of the code we added earlier. Apply following to the below file.
+   
+   ./ResponseService/main.go
+   ```diff
+   - func registerService(service string, port int, healthEp string) {...} 
+   - func getPrivateIPAddress() (string, error) {...}
+
+   - // register to consul
+   - registerService("response-service", 6060, "response")
+   + 
+   ```
+
+4. **Docker build**
+   Open a new terminal to build docker and set the following env
+
+   ```bash
+
+   # Set up Docker Hub credentials  
+   export TF_VAR_dockerhub_id=<dockerhub-id>
+   curl -L https://hub.docker.com/v2/orgs/$TF_VAR_dockerhub_id | jq
+   # make sure you see your account information in resposne
+
+   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose build
+   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
+
+   ```
+
+5. **Deloyment**
    
    **Update variables.hcl acordingly. Sepecially the `ami`**
    ```hcl
    # Packer variables (all are required)
    region                    = "us-east-1"
-   dockerhub_id              = "srahul3"
+   dockerhub_id              = "<your-dockerhub-id>"
 
    # Terraform variables (all are required)
    ami                       = "<your-ami-from-previous-step>"
@@ -86,7 +118,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    - Make sure Nomad shows two client
    - Make sure Consul services are healthy
 
-5. **Adding Minion phrase ion Consul KV**
+5. **Adding Minion phrase in Consul KV**
 
    SSH into first Nomad client and run below command(s)
 
@@ -101,8 +133,16 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    curl --request PUT --data '["Bello!", "Poopaye!", "Tulaliloo ti amo!"]' http://consul.service.consul:8500/v1/kv/minion_phrases
    ```
 
+6. **Nomad jobs**
+   Access the Nomad UI and add below to jobs. Copy the content of the job and paste it New Job of Nomad UI.
 
-4. **Test the Services**:
+   4-nomad/nomad-jobs/hello-service.nomad
+   4-nomad/nomad-jobs/response-service.nomad
+
+7. **Scaling up Response Service**
+   DIY: Figure out how to scale the servie to desired count 2.
+
+8. **Test the Services**:
    - Test **HelloService**:
      ```bash
      curl http://<ip-of-nomad-client>:5000/hello | jq
@@ -120,12 +160,12 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
      }
      ```
 
-5. **Access Consul UI**:
+9. **Access Consul UI**:
    - Open the Consul UI in a browser:
      ```plaintext
      http://localhost:8500
      ```
-6. **SSH to the 1st Response Service**:
+10. **SSH to the 1st Response Service**:
    - use ssh command suggested in terraform output and connect to the instance suggested by `Hello Service response`
    - Testing DNS:
      ```bash
@@ -171,11 +211,8 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
       "response_message": "Bello from ResponseService i-05506b6e36d25223a!"
       }
      ```
-7. **DIY**:
+11. **DIY**:
    - Read the code and identify how to add `Tank yu` to the `minion_phrases`
 
 ## Key Points
-- Dynamic service discovery: HelloService resolves ResponseService using Consul.
-- Centralized configuration via KV store.
-- Application lifecycle maangement and effective utilization of resources
-- Fault tollerant
+- Application management Platform like Nomad helps to easily deploy the application, scale it, provides better resource optimization, better control over scalibility.

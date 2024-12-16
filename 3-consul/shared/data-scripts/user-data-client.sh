@@ -17,38 +17,40 @@ INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://instance-data/la
 
 # starting the application
 if [ "${application_name}" = "hello-service" ]; then
-  sudo docker run -d --name ${application_name} --network=host -e RESPONSE_SERVICE_HOST=response-service.service.consul ${dockerhub_id}/helloservice:latest
+  sudo docker image pull ${dockerhub_id}/helloservice:latest
+  sudo docker run -d --name ${application_name} --network=host ${dockerhub_id}/helloservice:latest
 elif [ "${application_name}" = "response-service" ]; then
-  sudo docker run -d --name ${application_name} --network=host -e INSTANCE_ID=$INSTANCE_ID ${dockerhub_id}/responseservice:latest
+  sudo docker image pull ${dockerhub_id}/responseservice:latest
+  sudo docker run -d --name ${application_name} --network=host ${dockerhub_id}/responseservice:latest
 else
   echo "Unknown application name: ${application_name}"
 fi
 
-API_PAYLOAD='{
-  "Name": "'${application_name}'",
-  "ID": "'${application_name}'-'$INSTANCE_ID'",
-  "Address": "'$PUBLIC_IP'",
-  "Port": '${application_port}',
-  "Meta": {
-    "version": "1.0.0"
-  },
-  "EnableTagOverride": false,
-  "Checks": [
-    {
-      "Name": "HTTP Health Check",
-      "HTTP": "http://'$PUBLIC_IP':'${application_port}'/'${application_health_ep}'",
-      "Interval": "10s",
-      "Timeout": "1s"
-    }
-  ]
-}'
+# API_PAYLOAD='{
+#   "Name": "'${application_name}'",
+#   "ID": "'${application_name}'-'$INSTANCE_ID'",
+#   "Address": "'$PUBLIC_IP'",
+#   "Port": '${application_port}',
+#   "Meta": {
+#     "version": "1.0.0"
+#   },
+#   "EnableTagOverride": false,
+#   "Checks": [
+#     {
+#       "Name": "HTTP Health Check",
+#       "HTTP": "http://'$PUBLIC_IP':'${application_port}'/'${application_health_ep}'",
+#       "Interval": "10s",
+#       "Timeout": "1s"
+#     }
+#   ]
+# }'
 
-echo $API_PAYLOAD > /tmp/api_payload.json
+# echo $API_PAYLOAD > /tmp/api_payload.json
 
-# Register the service with Consul
-curl -X PUT http://${consul_ip}:8500/v1/agent/service/register \
--H "Content-Type: application/json" \
--d "$API_PAYLOAD"
+# # Register the service with Consul
+# curl -X PUT http://${consul_ip}:8500/v1/agent/service/register \
+# -H "Content-Type: application/json" \
+# -d "$API_PAYLOAD"
 
 sleep 10
 
