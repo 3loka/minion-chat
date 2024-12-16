@@ -6,7 +6,7 @@ datacenter = "dc1"
 client {
   enabled = true
   options {
-    "driver.raw_exec.enable"    = "1"
+    "driver.raw_exec.enable"    = "0"
     "docker.privileged.enabled" = "true"
   }
   servers = ["CONSUL_SERVER_IP"]
@@ -24,7 +24,7 @@ telemetry {
 }
 
 acl {
-  enabled = true
+  enabled = false
 }
 
 consul {
