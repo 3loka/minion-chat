@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
@@ -101,6 +102,9 @@ func initTracer() {
 
 	// Set the tracer
 	tracer = otel.Tracer("response-service")
+
+	// Set propagator
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 }
 
 func responseHandler(w http.ResponseWriter, r *http.Request) {
@@ -142,6 +146,9 @@ func responseHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Add HTTP status code to the span
 	span.SetAttributes(semconv.HTTPStatusCodeKey.Int(http.StatusOK))
+
+	// Log TraceID
+	log.Printf("ResponseService TraceID: %s", span.SpanContext().TraceID())
 }
 
 func getMinionPhrases(ctx context.Context) ([]string, error) {
@@ -186,7 +193,7 @@ func main() {
 
 	http.Handle("/metrics", promhttp.Handler())
 
-	http.HandleFunc("/response", responseHandler)
+	http.Handle("/response", otelhttp.NewHandler(http.HandlerFunc(responseHandler), "responseHandler"))
 
 	http.HandleFunc("/health", healthHandler)
 
