@@ -13,29 +13,14 @@ variable "name_prefix" {
   default     = "minion-vault"
 }
 
-variable "create_db_secrets" {
-  description = "creates db secrets in vault if set to true, make sure vault is deployed before creating these secrets"
-  default = false
-}
-
-variable "db_secrets" {
-  description = "created db secrets in vault if `create_db_secrets` is set to true"
-  default = <<EOT
-{
-  "username":   "kkavish.hashicorp",
-  "password": "kkavish is busy having fun at Goa Offsite"
-}
-EOT
-}
-
 variable "deploy_apps" {
   description = "deploys HelloService and ResponseService is set to true."
-  default = false
+  default     = false
 }
 
 variable "docker_registry" {
   description = "docker registry where images are hosted"
-  default = "docker.io"
+  default     = "docker.io"
 }
 
 variable "docker_user" {
@@ -48,7 +33,7 @@ variable "docker_password" {
 
 variable "ami" {
   description = "ami to use for deployment"
-  default = "ami-0bbedcb6360a12dbb"
+  default     = "ami-0bbedcb6360a12dbb"
 }
 
 variable "retry_join" {

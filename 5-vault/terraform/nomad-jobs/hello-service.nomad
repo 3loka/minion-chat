@@ -2,7 +2,7 @@ job "hello-service" {
   datacenters = ["dc1"]
 
   group "hello-group" {
-    count = 1
+    count = 2
     
     network {
     dns {
