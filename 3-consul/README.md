@@ -14,11 +14,14 @@ Our Hello app is already running with following limitations
 
 ## Overview
 This section introduces HashiCorp Consul to enhance service discovery and fault tolerance for HelloService and ResponseService:
-- With Consul's Service Discovery feature, hardcoded IPs are no longer necessary. Services can dynamically discover each other using Consul's DNS capabilities.
+- **Service Discovery:** With Consul's Service Discovery feature, hardcoded IPs are no longer necessary. Services can dynamically discover each other using Consul's DNS capabilities.
 - It enables seamless scaling by eliminating the need for internal load balancers for service-to-service communication.
 - Services can scale up or scale down without requiring additional configuration or reconfiguration.
-- Consul performs health checks, automatically removing unhealthy service instances from DNS records to prevent discovery of faulty instances.
-- Consul KV provides a storage easily accessible to the application.
+- **Fault tollerance:** Consul performs health checks, automatically removing unhealthy service instances from DNS records to prevent discovery of faulty instances.
+- **KV:** Consul KV provides a storage easily accessible to the application.
+
+Advance feature(Not in scope):
+- **Service Mesh:** Managing Network topology and Securing the iternal communication using mTLS.
 
 ## Goal
 - Eliminate the need for hardcoding IPs by detecting the Service through Consul DNS.

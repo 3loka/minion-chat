@@ -10,6 +10,40 @@ Our Hello app is already running with following limitations
 ## Overview
 This part introduces Nomad for Application Lifecycle Management for HelloService and ResponseService.
 
+**Responsibility Segrigation:**
+Considering the two different personas `Platform Engineer` and `DevOps`,  Infrastucture ochestration and Application orchestration is two different things and must be isolates to better management.
+
+**Application Management(DevOps).**
+e.g . When we checking the code, the CI/CD shall build the docker images and Nomad orchestrates it on existing Infrastructure.
+
+GitHub Action integartion with Nomad
+```hcl
+name: Deploy Nomad Job
+on: [push]
+jobs:
+  deploy:
+    name: Nomad Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v1
+
+      - name: Deploy with Nomad
+        uses: qazz92/nomad-deploy
+        with:
+          token: ${{ secrets.YOUR_NOMAD_SECRET }}
+          address: ${{ secrets.YOUR_NOMAD_SERVER }}
+          job: path/to/your/nomad/job/file
+          config: path/to/your/levant/config/file
+```
+
+**Platform Team:**
+Monitors the existing infra performance and there is need to scale up, they shall add more nodes to the Nomad cluster.
+
+In today's activity in first step, Lets orchestrate the infra of 2 nodes and in later steps lets use Nomad to orchestrate the application separately.
+
+```
+
 ## Prerequisites
 1. **Tools Installed**:
    - Terraform CLI
@@ -32,19 +66,6 @@ This part introduces Nomad for Application Lifecycle Management for HelloService
    ```
 
    Record the AMI id, we will need it in next step
-
-3. **Code Update**
-   Nomad auto registers the Service Instances to consul so we need to delete most of the code we added earlier. Apply following to the below file.
-   
-   ./ResponseService/main.go
-   ```diff
-   - func registerService(service string, port int, healthEp string) {...} 
-   - func getPrivateIPAddress() (string, error) {...}
-
-   - // register to consul
-   - registerService("response-service", 6060, "response")
-   + 
-   ```
 
 4. **Docker build**
    Open a new terminal to build docker and set the following env
