@@ -10,9 +10,11 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
@@ -100,6 +102,9 @@ func initTracer() {
 
 	// Set the tracer
 	tracer = otel.Tracer("hello-service")
+	// Set the global propagator to W3C Trace Context
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+
 }
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
@@ -121,7 +126,7 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the ResponseService
-	client := http.Client{}
+	client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 	req, _ := http.NewRequestWithContext(ctx, "GET", responseServiceURL, nil)
 	resp, err := client.Do(req)
 	if err != nil {
@@ -152,6 +157,9 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Add HTTP status code to the span
 	span.SetAttributes(semconv.HTTPStatusCodeKey.Int(http.StatusOK))
+
+	// Log TraceID
+	log.Printf("HelloService TraceID: %s", span.SpanContext().TraceID())
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
