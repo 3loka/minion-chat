@@ -49,12 +49,12 @@ We’ll monitor:
 
 ### 3. Building AMI using Packer
 
-packer init -var-file=variables.hcl image.pkr.hcl
-packer build -var-file=variables.hcl image.pkr.hcl
+'''packer init -var-file=variables.hcl image.pkr.hcl
+packer build -var-file=variables.hcl image.pkr.hcl'''
 
 Record the AMI id, and update it in `variables.hcl` under `ami = "<your-newly-built-ami>"`
 
-### 3. Deploy the infrastructure changes
+### 4. Deploy the infrastructure changes
 
 Since we're adding couple more services in this step, we need to expose those ports to the outside world so that we can access the services. 
 
@@ -62,7 +62,7 @@ For that
 1. `terraform init`
 2. `terraform apply -var-file=variables.hcl`
 
-### 4. Deploy the Stack
+### 5. Deploy the Stack
 Let’s deploy the monitoring stack on **Nomad**.
 
 1. Open **Nomad UI**.
@@ -74,7 +74,7 @@ Now, sit back and let Nomad launch the monitoring stack for you! 🔥
 
 ---
 
-### 5. Configure Prometheus
+### 6. Configure Prometheus
 
 Prometheus scrapes metrics from the following targets:
 - **Consul**: `consul.service.consul:8500`
@@ -88,7 +88,7 @@ The Prometheus config is defined in `prometheus.yml`. To view the metrics:
 
 ---
 
-### 6. Visualize Metrics in Grafana
+### 7. Visualize Metrics in Grafana
 
 Let’s make those metrics beautiful! 🎨
 
@@ -100,7 +100,7 @@ Let’s make those metrics beautiful! 🎨
 
 ---
 
-### 7. Set Up Alerting with Alertmanager
+### 8. Set Up Alerting with Alertmanager
 
 Now let’s configure alerting rules to notify us when something goes wrong.
 
@@ -116,7 +116,7 @@ When the alert is triggered, Alertmanager will send a notification to a webhook 
 
 ---
 
-### 8. Simulate an Alert 🚨
+### 9. Simulate an Alert 🚨
 
 Let’s trigger an alert to see how the system reacts.
 
@@ -130,7 +130,7 @@ Let’s trigger an alert to see how the system reacts.
 Pretty cool, right? 😎
 
 
-### 9. Tracing
+### 10. Tracing
 
 In this step let's explore on enabling distributed tracing support for our application.
 We can get started by deploying jeager stack which contains open-telemtry collector as well as jaeger UI which we can use to dig deeper into traces.
