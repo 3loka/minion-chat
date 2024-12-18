@@ -112,7 +112,8 @@ DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
 Run in new terminal
 ```bash
 ssh -i "minion-key.pem" ubuntu@$RESPONSE_SERVICE
-docker run -d --name 'response_service' -p -e TF_VAR_dockerhub_id=${TF_VAR_dockerhub_id} 6060:6060 ${TF_VAR_dockerhub_id}/responseservice:latest
+sudo su
+docker run -d --name 'response_service' -p 6060:6060 -e TF_VAR_dockerhub_id=${TF_VAR_dockerhub_id} ${TF_VAR_dockerhub_id}/responseservice:latest
 sudo docker logs response_service
 # Listening on port 6060...
 
@@ -124,8 +125,9 @@ exit
 Run in new terminal
 ```bash
 ssh -i "minion-key.pem" ubuntu@$HELLO_SERVICE
-docker run -d --name 'hello_service' -p 5050:5050 ${TF_VAR_dockerhub_id}/responseservice:latest
-sudo docker logs response_service
+sudo su
+docker run -d --name 'hello_service' -p 5050:5050 ${TF_VAR_dockerhub_id}/helloservice:latest
+sudo docker logs helloservice
 # Listening on port 5050...
 
 exit
