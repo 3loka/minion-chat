@@ -2,7 +2,7 @@ job "response-service" {
   datacenters = ["dc1"]
 
   group "response-group" {
-    count = 1
+    count = 2
     
     network {
     dns {
@@ -18,18 +18,20 @@ job "response-service" {
       driver = "docker"
 
       vault {
-        policies = ["response-service-job"]
+        policies = ["${vault_policy}"]
       }
 
       template {
         data = <<EOF
-{{ with secret "secret/data/database/creds/my-role" }}
-DB_USERNAME="{{ .Data.data.username }}"
-DB_PASSWORD="{{ .Data.data.password }}"
+{{ with secret "database/creds/app-role" }}
+VAULT_APP_SECRET_DB_USERNAME="{{ .Data.username }}"
+VAULT_APP_SECRET_DB_PASSWORD="{{ .Data.password }}"
 {{ end }}
 EOF
-        destination = "local/secrets.env"
         env         = true
+
+        # create a file with all the secrets above, this is for apps which require a config file instead of reading from ENV.
+        destination = "secrets/db_config.json"
       }
 
       config {

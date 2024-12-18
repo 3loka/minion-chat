@@ -185,11 +185,19 @@ func registerService(service string, port int, healthEp string) {
 
 func vaultResponseHandler(w http.ResponseWriter, r *http.Request) {
 	// Fetch database credentials from Vault
-	dbUser := os.Getenv("DB_USERNAME")
-	dbPassword := os.Getenv("DB_PASSWORD")
+	envrs := getEnvByPrefix("VAULT_APP_SECRET_")
+	dbUser, exists := envrs["VAULT_APP_SECRET_DB_USERNAME"]
+	if !exists {
+		http.Error(w, "Failed to fetch database credentials, missing db username", http.StatusInternalServerError)
+	}
+
+	dbPassword, exists := envrs["VAULT_APP_SECRET_DB_PASSWORD"]
+	if !exists {
+		http.Error(w, "Failed to fetch database credentials, missing db password", http.StatusInternalServerError)
+	}
 
 	if len(dbUser) == 0 || len(dbPassword) == 0 {
-		http.Error(w, "Failed to fetch database credentials", http.StatusInternalServerError)
+		http.Error(w, "empty database credentials", http.StatusInternalServerError)
 		return
 	}
 
@@ -209,4 +217,35 @@ func main() {
 	http.HandleFunc("/response", responseHandler)
 	fmt.Println("ResponseService running on port 5001...")
 	log.Fatal(http.ListenAndServe(":5001", nil))
+}
+
+// getEnvByPrefix returns a map of all environment variables that start with the given prefix.
+// The returned keys will have the prefix removed.
+func getEnvByPrefix(prefix string) map[string]string {
+	// Initialize the result map
+	envVars := make(map[string]string)
+
+	log.Println("env", os.Environ())
+
+	// Get all environment variables
+	for _, env := range os.Environ() {
+		// Split into key=value
+		pair := strings.SplitN(env, "=", 2)
+		if len(pair) != 2 {
+			continue
+		}
+
+		key := pair[0]
+		value := pair[1]
+
+		// Check if the key starts with our prefix
+		if strings.HasPrefix(key, prefix) {
+			// Remove the prefix from the key and store in map
+			envVars[key] = value
+		}
+	}
+
+	log.Println("valid env", envVars)
+
+	return envVars
 }
