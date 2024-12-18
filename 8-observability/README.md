@@ -47,6 +47,13 @@ We’ll monitor:
    DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
    ```
 
+### 3. Building AMI using Packer
+
+packer init -var-file=variables.hcl image.pkr.hcl
+packer build -var-file=variables.hcl image.pkr.hcl
+
+Record the AMI id, and update it in `variables.hcl` under `ami = "<your-newly-built-ami>"`
+
 ### 3. Deploy the infrastructure changes
 
 Since we're adding couple more services in this step, we need to expose those ports to the outside world so that we can access the services. 

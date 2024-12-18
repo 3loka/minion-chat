@@ -18,7 +18,7 @@
 10. Do `terraform output vault_token` to get the token which will be used to login on Vault server.
 11. Check whether Database Secret Engine is created on the Vault server via UI.
 12. Check whether Nomad and Consul is up and running
-13. Once everything is validated do `terraform destroy -var docker_user=$DOCKER_USER -var docker_password=$DOCKER_PASSWORD -var deploy_apps=true`
+13. Once everything is validated do `terraform apply -var docker_user=$DOCKER_USER -var docker_password=$DOCKER_PASSWORD -var deploy_apps=true`
 14. This will deploy both HelloService and ResponseService on Nomad.
 15. Validate whether both are up and running.
 16. Look at the definitions of Nomad jobs for both apps, you'll see no template for HelloService while DB creds are fetched in a template in ResponseService. (The key difference)
@@ -64,3 +64,21 @@ Common scenarios for sealing/unsealing:
 3. It then adds this generated username and password to the valid set of users in Postgres.
 4. Returns the username and password as a response to the client.
 5. Sets a TTL, on expiry of which it removes the corresponding username and password from active Postgres users.
+
+
+curl --location 'http://98.84.123.161:8200/v1/database/creds/app-role' \
+--header 'X-Vault-Token: iXKDQd2N1D'
+
+{
+"request_id": "f97db4d5-0781-7aea-7d02-bc897dd41be1",
+"lease_id": "database/creds/app-role/aki3Ts36VeCawmIa7x9bDhbs",
+"renewable": true,
+"lease_duration": 60,
+"data": {
+"password": "SnLuGIHyz-chiEyypQM7",
+"username": "v-token-app-role-oAJrl3rotx6gzqORQ7LJ-1734442960"
+},
+"wrap_info": null,
+"warnings": null,
+"auth": null
+}
