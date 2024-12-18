@@ -6,6 +6,7 @@ provider "aws" {
 #2.  Modify HelloService and ResponseService to include Consul configuration.
 
 resource "aws_security_group" "consul_ui_ingress" {
+
   name   = "${var.name_prefix}-ui-ingress"
 
   # SSH
@@ -24,9 +25,59 @@ resource "aws_security_group" "consul_ui_ingress" {
     cidr_blocks     = ["0.0.0.0/0"]
   }
 
-    # Consul
+  # minion
+  ingress {
+    from_port       = 5050
+    to_port         = 5050
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
+  # minion
+  ingress {
+    from_port       = 6060
+    to_port         = 6060
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
+  # Nomad
+  ingress {
+    from_port       = 4646
+    to_port         = 4646
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port       = 4647
+    to_port         = 4647
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
+  # vault
+  ingress {
+    from_port       = 8200
+    to_port         = 8200
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port       = 8201
+    to_port         = 8201
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
   ingress {
     from_port       = 5000
+    to_port         = 5000
+    protocol        = "tcp"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = 5001
     to_port         = 5001
     protocol        = "tcp"
     cidr_blocks     = ["0.0.0.0/0"]
@@ -49,7 +100,7 @@ resource "aws_security_group" "consul_ui_ingress" {
 }
 
 # Add EC2 instance for Consul
-resource "aws_instance" "consul" {
+resource "aws_instance" "noamd_server" {
   instance_type = var.instance_type
   ami = var.ami
   key_name      = aws_key_pair.minion-key.key_name
@@ -81,63 +132,16 @@ resource "aws_instance" "consul" {
     region                    = var.region
     cloud_env                 = "aws"
     retry_join                = var.retry_join
-  })
-
-  vpc_security_group_ids = [aws_security_group.consul_ui_ingress.id]
-}
-
-# HelloService EC2 instance
-resource "aws_instance" "hello_service" {
-  depends_on = [aws_instance.response_service]
-  ami           = var.ami
-  instance_type = var.instance_type
-  key_name      = aws_key_pair.minion-key.key_name
-
-  # instance tags
-  # ConsulAutoJoin is necessary for nodes to automatically join the cluster
-  tags = merge(
-    {
-      "Name" = "${var.name_prefix}-hello-service-1"
-    },
-    {
-      "ConsulAutoJoin" = "auto-join"
-    },
-    {
-      "NomadType" = "client"
-    }
-  )
-
-  iam_instance_profile = aws_iam_instance_profile.instance_profile.name
-
-  metadata_options {
-    http_endpoint          = "enabled"
-    instance_metadata_tags = "enabled"
-  }
-
-  # initialises the instance with the runtime configuration
-  user_data = templatefile("${path.module}/shared/data-scripts/user-data-client.sh", {
-    region                    = var.region
-    cloud_env                 = "aws"
-    retry_join                = var.retry_join
-    # for registering with Consul
-    consul_ip                 = aws_instance.consul.private_ip
-    application_port          = 5000
-    application_name          = "hello-service"
-    application_health_ep     = "hello"
-    dockerhub_id              = var.dockerhub_id
-    hcp_client_id             = var.hcp_client_id
-    hcp_client_secret         = var.hcp_client_secret
-    hcp_organization_id       = var.hcp_organization_id
-    hcp_project_id            = var.hcp_project_id
+    vault_token = var.vault_token
   })
 
   vpc_security_group_ids = [aws_security_group.consul_ui_ingress.id]
 }
 
 # Update ResponseService to register with Consul
-resource "aws_instance" "response_service" {
-  count = var.response_service_count
-  depends_on = [aws_instance.consul]
+resource "aws_instance" "nomad_client" {
+  depends_on = [aws_instance.noamd_server]
+  count = var.response_service_count  
   ami           = var.ami
   instance_type = var.instance_type
   key_name      = aws_key_pair.minion-key.key_name
@@ -146,7 +150,7 @@ resource "aws_instance" "response_service" {
   # ConsulAutoJoin is necessary for nodes to automatically join the cluster
   tags = merge(
     {
-      "Name" = "${var.name_prefix}-response-service-${count.index}"
+      "Name" = "${var.name_prefix}-nomad-client-${count.index}"
     },
     {
       "ConsulAutoJoin" = "auto-join"
@@ -169,15 +173,11 @@ resource "aws_instance" "response_service" {
     cloud_env                 = "aws"
     retry_join                = var.retry_join
     # for registering with Consul
-    consul_ip                 = aws_instance.consul.private_ip
+    consul_ip                 = aws_instance.noamd_server.private_ip
     application_port          = 5001
     application_name          = "response-service"
     application_health_ep     = "response"
     dockerhub_id              = var.dockerhub_id
-    hcp_client_id             = var.hcp_client_id
-    hcp_client_secret         = var.hcp_client_secret
-    hcp_organization_id       = var.hcp_organization_id
-    hcp_project_id            = var.hcp_project_id
   })
 
   vpc_security_group_ids = [aws_security_group.consul_ui_ingress.id]
@@ -227,9 +227,6 @@ data "aws_iam_policy_document" "auto_discover_cluster" {
   }
 }
 
-
-
-
 # generate a new key pair
 resource "tls_private_key" "pk" {
   algorithm = "RSA"
@@ -237,7 +234,7 @@ resource "tls_private_key" "pk" {
 }
 
 resource "aws_key_pair" "minion-key" {
-  key_name   = "minion-key-pair"
+  key_name   = "minion-key-hvs"
   public_key = tls_private_key.pk.public_key_openssh
 }
 

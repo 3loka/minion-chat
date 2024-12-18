@@ -5,7 +5,7 @@ In this part, we integrate HashiCorp Vault to manage secrets securely. A good us
 
 1. Generate dynamic credentials for a hypothetical database.
 2. Provide these credentials securely to HelloService and ResponseService.
-3. Rotate credentials automatically after a defined TTL.
+3. Auto-rotate automatically
 
 ---
 
@@ -14,7 +14,7 @@ In this part, we integrate HashiCorp Vault to manage secrets securely. A good us
 **Scenario**:
 
 - HelloService and ResponseService need access to a database (e.g., PostgreSQL) for storing and retrieving messages.
-- Instead of hardcoding database credentials, Vault dynamically generates short-lived credentials.
+- Instead of hardcoding database credentials, credentials are stored in Vault.
 
 ---
 
@@ -50,8 +50,8 @@ vault write database/config/my-postgres-database \
 vault write database/roles/my-role \
     db_name=my-postgres-database \
     creation_statements="CREATE USER \"{{name}}\" WITH PASSWORD '{{password}}' VALID UNTIL '{{expiration}}'; GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"{{name}}\";" \
-    default_ttl="1h" \
-    max_ttl="24h"
+    default_ttl="1m" \
+    max_ttl="1m"
 ```
 
 ---
@@ -83,12 +83,12 @@ export VAULT_TOKEN=root
 
 **Test HelloService**:
 ```bash
-curl http://<hello_service_public_ip>:5000/hello
+curl http://<hello_service_public_ip>:5000/hello_vault
 ```
 
 **Test ResponseService**:
 ```bash
-curl http://<response_service_public_ip>:5001/response
+curl http://<response_service_public_ip>:5001/response_vault
 ```
 
 ### 5. Observe the dynamically generated database credentials in the response.

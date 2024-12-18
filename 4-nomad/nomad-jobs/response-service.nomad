@@ -22,6 +22,11 @@ job "response-service" {
         ports = ["http"]
       }
 
+      env {
+        TF_VAR_dockerhub_id = ""
+      }
+
+
       service {
         name = "response-service"
         port = "http"

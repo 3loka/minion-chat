@@ -3,8 +3,8 @@
 set -e
 
 CONFIGDIR=/ops/shared/config
-
 CONSULCONFIGDIR=/etc/consul.d
+NOMADCONFIGDIR=/etc/nomad.d
 HOME_DIR=ubuntu
 
 # Wait for network
@@ -12,8 +12,11 @@ sleep 15
 
 DOCKER_BRIDGE_IP_ADDRESS=(`ip -brief addr show docker0 | awk '{print $3}' | awk -F/ '{print $1}'`)
 CLOUD=$1
-SERVER_COUNT=$2
-RETRY_JOIN=$3
+RETRY_JOIN=$2
+
+echo "CLOUD_ENV: $CLOUD"
+echo "RETRY_JOIN: $RETRY_JOIN"
+echo "DOCKER_BRIDGE_IP_ADDRESS: $DOCKER_BRIDGE_IP_ADDRESS"
 
 # Get IP from metadata service
 case $CLOUD in
@@ -35,18 +38,33 @@ case $CLOUD in
     echo "CLOUD_ENV: not set"
     ;;
 esac
+echo "IP_ADDRESS: $IP_ADDRESS"
 
 # Consul
 sed -i "s/IP_ADDRESS/$IP_ADDRESS/g" $CONFIGDIR/consul.hcl
-sed -i "s/SERVER_COUNT/$SERVER_COUNT/g" $CONFIGDIR/consul.hcl
 sed -i "s/RETRY_JOIN/$RETRY_JOIN/g" $CONFIGDIR/consul.hcl
-sudo cp $CONFIGDIR/consul.hcl $CONSULCONFIGDIR
+sudo cp $CONFIGDIR/consul.hcl $CONSULCONFIGDIR/consul.hcl
+
+cat $CONFIGDIR/consul.hcl
+cat $CONSULCONFIGDIR/consul.hcl
 
 sudo systemctl enable consul.service
 sudo systemctl start consul.service
 sleep 10
+
+echo "Consul started"
+
 export CONSUL_HTTP_ADDR=$IP_ADDRESS:8500
 export CONSUL_RPC_ADDR=$IP_ADDRESS:8400
+
+sudo cp $CONFIGDIR/nomad.hcl $NOMADCONFIGDIR/nomad.hcl
+
+sudo systemctl enable nomad.service
+sudo systemctl start nomad.service
+sleep 10
+export NOMAD_ADDR=http://$IP_ADDRESS:4646
+
+echo "Nomad started"
 
 # Add hostname to /etc/hosts
 
@@ -59,6 +77,9 @@ sed -i "s/DOCKER_BRIDGE_IP_ADDRESS/$DOCKER_BRIDGE_IP_ADDRESS/g" $CONFIGDIR/consu
 sudo mkdir -p /etc/systemd/resolved.conf.d/
 sudo cp $CONFIGDIR/consul-systemd-resolved.conf /etc/systemd/resolved.conf.d/consul.conf
 sudo systemctl restart systemd-resolved
+
+echo "Systemd-resolved restarted"
+cat /etc/systemd/resolved.conf.d/consul.conf
 
 # Set env vars for tool CLIs
 echo "export CONSUL_RPC_ADDR=$IP_ADDRESS:8400" | sudo tee --append /home/$HOME_DIR/.bashrc

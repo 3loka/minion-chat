@@ -1,11 +1,8 @@
-provider "aws" {
-  region = var.region
-}
-
 locals {
-  vault_token = random_password.vault_token.result
-  consul =  "http://${aws_instance.nomad_server.public_ip}:8500"
-  nomad =  "http://${aws_instance.nomad_server.public_ip}:4646"
+  vault_token       = random_password.vault_token.result
+  postgres_password = random_password.postgres_password.result
+  consul            = "http://${aws_instance.nomad_server.public_ip}:8500"
+  nomad             = "http://${aws_instance.nomad_server.public_ip}:4646"
 }
 
 resource "random_password" "vault_token" {
@@ -13,8 +10,13 @@ resource "random_password" "vault_token" {
   special = false
 }
 
+resource "random_password" "postgres_password" {
+  length  = 10
+  special = false
+}
+
 resource "aws_security_group" "minion_sg" {
-  name   = "${var.name_prefix}-ui-ingress"
+  name = "${var.name_prefix}-ui-ingress"
 
   # SSH
   ingress {
@@ -26,68 +28,76 @@ resource "aws_security_group" "minion_sg" {
 
   # Consul
   ingress {
-    from_port       = 8500
-    to_port         = 8500
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 8500
+    to_port     = 8500
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # minion
   ingress {
-    from_port       = 5050
-    to_port         = 5050
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 5050
+    to_port     = 5050
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # minion
   ingress {
-    from_port       = 6060
-    to_port         = 6060
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 6060
+    to_port     = 6060
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Nomad
   ingress {
-    from_port       = 4646
-    to_port         = 4646
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 4646
+    to_port     = 4646
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    from_port       = 4647
-    to_port         = 4647
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 4647
+    to_port     = 4647
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # vault
   ingress {
-    from_port       = 8200
-    to_port         = 8200
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 8200
+    to_port     = 8200
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    from_port       = 8201
-    to_port         = 8201
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port       = 5000
-    to_port         = 5000
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 8201
+    to_port     = 8201
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    from_port       = 5001
-    to_port         = 5001
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 5001
+    to_port     = 5001
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # postgres
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # allow_all_internal_traffic
@@ -165,56 +175,6 @@ resource "local_file" "minion-vault-key" {
   file_permission = "0400"
 }
 
-# Add EC2 instance for Vault
-resource "aws_instance" "vault" {
-  ami           = var.ami
-  instance_type = var.instance_type
-  key_name      = aws_key_pair.minion-key-vault.key_name
-
-  user_data = <<-EOT
-    #!/bin/bash
-    apt-get update -y
-    apt-get install -y docker.io unzip curl jq
-
-    # Install Vault
-    curl -O https://releases.hashicorp.com/vault/1.14.1/vault_1.14.1_linux_amd64.zip
-    unzip vault_1.14.1_linux_amd64.zip
-    mv vault /usr/local/bin/
-
-    # Get private IP of the instance
-    export PRIVATE_IP=`wget -q -O - http://169.254.169.254/latest/meta-data/local-ipv4`
-
-    # Configure Consul
-    nohup consul agent -dev -bind=$PRIVATE_IP -client=$PRIVATE_IP -data-dir=/tmp/consul -retry-join="${var.retry_join}" > /var/log/consul.log 2>&1 &
-
-    # Create vault config for consul backend storage
-    cat <<-EOF >/home/ubuntu/config.hcl
-    storage "consul" {
-     address = "$PRIVATE_IP:8500"
-     path    = "vault/"
-    }
-    listener "tcp" {
-     address     = "$PRIVATE_IP:8200"
-     tls_disable = 1
-    }
-
-    api_addr = "http://$PRIVATE_IP:8200"
-    ui = true
-    disable_mlock = true
-    EOF
-
-    # Start Vault in dev mode (for demo)
-    nohup vault server -dev -dev-root-token-id="${local.vault_token}" -config=/home/ubuntu/config.hcl > /var/log/vault.log 2>&1 &
-  EOT
-
-  tags = {
-    "ConsulAutoJoin" = "auto-join"
-  }
-
-  vpc_security_group_ids = [aws_security_group.minion_sg.id]
-  iam_instance_profile = aws_iam_instance_profile.instance_profile_vault.name
-}
-
 resource "time_sleep" "wait_90_seconds" {
   depends_on = [aws_instance.vault]
 
@@ -224,9 +184,9 @@ resource "time_sleep" "wait_90_seconds" {
 
 # Add EC2 instance for Consul
 resource "aws_instance" "nomad_server" {
-  depends_on = [time_sleep.wait_90_seconds]
+  depends_on    = [time_sleep.wait_90_seconds]
   instance_type = var.instance_type
-  ami = var.ami
+  ami           = var.ami
   key_name      = aws_key_pair.minion-key-vault.key_name
 
   # instance tags
@@ -252,11 +212,11 @@ resource "aws_instance" "nomad_server" {
   }
 
   user_data = templatefile("${path.module}/shared/data-scripts/user-data-server.sh", {
-    server_count              = 1
-    region                    = var.region
-    cloud_env                 = "aws"
-    retry_join                = var.retry_join
-    vault_token = local.vault_token
+    server_count = 1
+    region       = var.region
+    cloud_env    = "aws"
+    retry_join   = var.retry_join
+    vault_token  = local.vault_token
   })
 
   vpc_security_group_ids = [aws_security_group.minion_sg.id]
@@ -266,7 +226,7 @@ resource "aws_instance" "nomad_server" {
 resource "aws_instance" "nomad_client" {
   depends_on = [aws_instance.nomad_server]
 
-  count = var.response_service_count
+  count         = var.response_service_count
   ami           = var.ami
   instance_type = var.instance_type
   key_name      = aws_key_pair.minion-key-vault.key_name
@@ -294,15 +254,15 @@ resource "aws_instance" "nomad_client" {
 
   # initialises the instance with the runtime configuration
   user_data = templatefile("${path.module}/shared/data-scripts/user-data-client.sh", {
-    region                    = var.region
-    cloud_env                 = "aws"
-    retry_join                = var.retry_join
+    region     = var.region
+    cloud_env  = "aws"
+    retry_join = var.retry_join
     # for registering with Consul
-    consul_ip                 = aws_instance.nomad_server.private_ip
-    application_port          = 5001
-    application_name          = "response-service"
-    application_health_ep     = "response"
-    dockerhub_id              = var.docker_user
+    consul_ip             = aws_instance.nomad_server.private_ip
+    application_port      = 5001
+    application_name      = "response-service"
+    application_health_ep = "response"
+    dockerhub_id          = var.docker_user
   })
 
   vpc_security_group_ids = [aws_security_group.minion_sg.id]

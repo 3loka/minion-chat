@@ -47,7 +47,7 @@ func getVaultCredentials() (map[string]interface{}, error) {
 	token := os.Getenv("VAULT_TOKEN")
 
 	client := &http.Client{}
-	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/v1/secret/data/database/creds/my-role", vaultAddr), nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/v1/database/creds/app-role", vaultAddr), nil)
 	req.Header.Add("X-Vault-Token", token)
 
 	resp, err := client.Do(req)

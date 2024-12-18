@@ -19,6 +19,11 @@ variable "dockerhub_id" {
   type = string
 }
 
+variable "hcp_organization_id" {}
+variable "hcp_project_id" {}
+variable "hcp_client_id" {}
+variable "hcp_client_secret" {}
+
 data "amazon-ami" "hashistack" {
   filters = {
     architecture                       = "x86_64"
@@ -72,7 +77,7 @@ build {
   }
 
   provisioner "shell" {
-    environment_vars = ["CLOUD_ENV=aws", "DOCKERHUB_ID=${var.dockerhub_id}"]
+    environment_vars = ["CLOUD_ENV=aws", "DOCKERHUB_ID=${var.dockerhub_id}"],
     script           = "./shared/scripts/setup.sh"
   }
 }

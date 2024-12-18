@@ -30,7 +30,17 @@ variable "name_prefix" {
 
 variable "response_service_count" {
   description = "Number of response service instances to create"
-  default     = 1
+  default     = 2
+}
+
+variable "vault_token" {
+  description = "vault token"
+  default = ""
+}
+
+variable "existing_security_group" {
+  description = "existing sg"
+  default = null
 }
 
 variable "hcp_client_id" {

@@ -1,54 +1,31 @@
 
-# Part 3: Consul Integration
+# Part 7: HVS Integration
+
+## Background
+Our Hello app is already running with following limitations
+1. **Manual Application Management**: Application lifecycle is difficult to maintain using terraform/manually. The compute is not utilized efficiently.
+2. **Lack of Resource Optimization** One AWS Instance per Service Instance is not the efficient and cost effective way to run production.
+3. **Insecure Secret Management**: Secrets are hardcoded and not securely handled.
 
 ## Overview
-This part introduces Consul for service discovery, and fault tollerance for HelloService and ResponseService.
+This part introduces HVS for storing and retrieving static secrets.
 
 ## Prerequisites
 1. **Tools Installed**:
    - Terraform CLI
-   - jq cli `brew install jq`
-   - Packer cli
+   - jq CLI
+   - Packer CLI
 2. **Packer generated AMI** (Pre-baked AMI with Consul Server, Consul Client, Docker Images, DNS Configuration):
    - An AWS account with access keys configured.
-3. **Docker Images**
-   - Docker images compiled in last activity and available on docker-hub
-4 **HCP CLI**
-   - Install hcp cli - https://developer.hashicorp.com/hcp/docs/cli/install
 
 ## Steps to Run
 
 1. **Navigate to the Part 2 directory**:
    ```bash
-   cd 3-consul
-   ```
-2. **Replace the hardcoded IPs with DNS**
-   Response Service: `response-service.service.consul`
-   Consul Service: `consul.service.consul`
-
-3. **Get the minion phrase from Consul KV**
-   
-   To add minion phrase in Cosnul KV, SSH into one of the client machine and execute
-   ```sh
-   curl --request PUT --data '["Bello!", "Poopaye!", "Tulaliloo ti amo!"]' http://consul.service.consul:8500/v1/kv/minion_phrases
-   ```
-   
+   cd 7-hvs
    ```
 
-   Modify the response service to read the Consul KV and get the minion phrase dynamically.
-
-   :bulb:
-   ```golang
-   resp, err := http.Get("http://consul.service.consul:8500/v1/kv/minion_phrases?raw")
-   ```
-
-4. **Push Docker Images to Docker Hub**
-
-   ```bash
-   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose build
-   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
-   ```
-5. **Building AMI using Packer**
+2. **Building AMI using Packer**
    ```bash
    packer init -var-file=variables.hcl image.pkr.hcl
    packer build -var-file=variables.hcl image.pkr.hcl
@@ -56,13 +33,49 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
 
    Record the AMI id, we will need it in next step
 
-6. **Deloyment**
+3. **Code Update**
+   Nomad auto registers the Service Instances to consul so we need to delete most of the code we added earlier. Apply following to the below file.
+   
+   ./ResponseService/main.go
+   ```diff
+   - func registerService(service string, port int, healthEp string) {...} 
+   - func getPrivateIPAddress() (string, error) {...}
+
+   - // register to consul
+   - registerService("response-service", 6060, "response")
+   + 
+   ```
+
+4. **Docker build**
+   Open a new terminal to build docker and set the following env
+
+   ```bash
+
+   # Set up Docker Hub credentials  
+   export TF_VAR_dockerhub_id=<dockerhub-id>
+   curl -L https://hub.docker.com/v2/orgs/$TF_VAR_dockerhub_id | jq
+   # make sure you see your account information in resposne
+
+   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose build
+   DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
+
+   ```
+
+5. **Deloyment**
+ 
+   **Create a secret in HVS**
+   ```bash
+   hcp vault-secrets apps create minion-app
+   echo 'is bruce wayne' >> secret
+   hcp vault-secrets secrets create batman --app=minion-app --data-file=- < secret
+   hcp vault-secrets secrets open batman
+   ```
    
    **Update variables.hcl acordingly. Sepecially the `ami`**
    ```hcl
    # Packer variables (all are required)
    region                    = "us-east-1"
-   dockerhub_id              = "srahul3"
+   dockerhub_id              = "<your-dockerhub-id>"
 
    # Terraform variables (all are required)
    ami                       = "<your-ami-from-previous-step>"
@@ -71,30 +84,76 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
    response_service_count    = 2
    ```
    
-   **Set Env Variable**
-   ```bash
-      export HCP_CLIENT_ID=''
-      export HCP_CLIENT_SECRET=''
-   ```
-   
    **Run following command**
    ```bash
    terraform init
    terraform apply -var-file=variables.hcl
    ```
-   
-   **Create a secret in HVS**
-   ```bash
-   hcp vault-secrets apps create minion-app
-   echo 'is bruce wayne' >> secret
-   hcp vault-secrets secrets create batman --app=minion-app --data-file=- < secret
-   hcp vault-secrets secrets open batman
+   Response
+   ```
+   Outputs:
+
+   instance_ids = <<EOT
+      i-04bdda5b8fb6acb37,
+      i-06b5c92a418169db2
+
+   EOT
+   private_ip = <<EOT
+      # Nomad server
+      172.31.25.61,
+
+      # Nomad client
+      172.31.16.189,
+      172.31.29.204
+
+   EOT
+   ssh = <<EOT
+      # Nomad server
+      ssh -i "minion-key.pem" ubuntu@23.22.218.131
+
+      # Nomad client
+      ssh -i "minion-key.pem" ubuntu@3.94.166.246
+      ssh -i "minion-key.pem" ubuntu@34.229.194.154
+
+   EOT
+   ui_urls = <<EOT
+      Consul Server: http://23.22.218.131:8500
+      Nomad Server: http://23.22.218.131:4646
+   EOT
+   ```
+4. **Testing Servers**:
+   - Make sure Consul UI and Nomad UI and loading
+   - Make sure Nomad shows two client
+   - Make sure Consul services are healthy
+
+5. **Adding Minion phrase in Consul KV**
+
+   SSH into first Nomad client and run below command(s)
+
+   Verify the docker bridge ip by running below command
+   ```sh
+   ip -brief addr show docker0 | awk '{print $3}' | awk -F/ '{print $1}'
    ```
 
-7. **Test the Services**:
+   :warning: Warning: If you see the result of above command other than `172.17.0.1`, then update that IP in nomad jobs.
+
+   ```sh
+   curl --request PUT --data '["Bello!", "Poopaye!", "Tulaliloo ti amo!"]' http://consul.service.consul:8500/v1/kv/minion_phrases
+   ```
+
+6. **Nomad jobs**
+   Access the Nomad UI and add below to jobs. Copy the content of the job, and update env variables and paste it New Job of Nomad UI.
+
+   4-nomad/nomad-jobs/hello-service.nomad
+   4-nomad/nomad-jobs/response-service.nomad
+
+7. **Scaling up Response Service**
+   DIY: Figure out how to scale the servie to desired count 2.
+
+8. **Test the Services**:
    - Test **HelloService**:
      ```bash
-     curl http://localhost:5000/hello | jq
+     curl http://<ip-of-nomad-client>:5000/hello | jq
      ```
    - Expected Response:
      ```json
@@ -105,16 +164,16 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
          "Poopaye!",
          "Tulaliloo ti amo!"
       ],
-      "response_message": "Bello from ResponseService i-05506b6e36d25223a!"
+      "response_message": "Bello from ResponseService"
      }
      ```
 
-8. **Access Consul UI**:
+9. **Access Consul UI**:
    - Open the Consul UI in a browser:
      ```plaintext
      http://localhost:8500
      ```
-9. **SSH to the 1st Response Service**:
+10. **SSH to the 1st Response Service**:
    - use ssh command suggested in terraform output and connect to the instance suggested by `Hello Service response`
    - Testing DNS:
      ```bash
@@ -129,7 +188,7 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
          "Poopaye!",
          "Tulaliloo ti amo!"
       ],
-      "response_message": "Bello from ResponseService i-05506b6e36d25223a!"
+      "response_message": "Bello from ResponseService"
       }
 
       sudo docker pause response-service
@@ -160,8 +219,9 @@ This part introduces Consul for service discovery, and fault tollerance for Hell
       "response_message": "Bello from ResponseService i-05506b6e36d25223a!"
       }
      ```
-10. **DIY**:
+11. **DIY**:
    - Read the code and identify how to add `Tank yu` to the `minion_phrases`
 
 ## Key Points
-- Getting secrets from HVS.
+- Learn how to create and get static secrets from HVS.
+
