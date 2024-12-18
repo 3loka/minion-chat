@@ -14,6 +14,7 @@ We’ll be deploying the following components using a single Nomad job:
 - **Prometheus** (port: `9090`) – Scrapes metrics and triggers alerts.
 - **Grafana** (port: `3000`) – Visualizes metrics via dashboards.
 - **Alertmanager** (port: `9093`) – Handles alerts and escalates them to a webhook.
+- **Jaeger** (port: `16686`) - Helps to explore application traces
 
 ## 🎯 Monitoring Targets
 We’ll monitor:
@@ -54,13 +55,13 @@ For that
 1. `terraform init`
 2. `terraform apply -var-file=variables.hcl`
 
-### 4. Deploy the Monitoring Stack
+### 4. Deploy the Stack
 Let’s deploy the monitoring stack on **Nomad**.
 
 1. Open **Nomad UI**.
 2. Go to **Jobs > Run Job**.
-3. Paste the contents of `monitoring-stack.nomad` into the job submission form.
-4. Hit **Submit**!
+3. Paste the contents of `hello-service.nomad` `response-service.nomad` `monitoring-stack.nomad` `tracing.nomad` into the job submission form in this order.
+4. Hit **Submit** for each of them!
 
 Now, sit back and let Nomad launch the monitoring stack for you! 🔥
 
@@ -123,6 +124,7 @@ Pretty cool, right? 😎
 
 
 ### 9. Tracing
+
 In this step let's explore on enabling distributed tracing support for our application.
 We can get started by deploying jeager stack which contains open-telemtry collector as well as jaeger UI which we can use to dig deeper into traces.
 
