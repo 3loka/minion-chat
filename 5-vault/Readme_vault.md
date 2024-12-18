@@ -64,3 +64,21 @@ Common scenarios for sealing/unsealing:
 3. It then adds this generated username and password to the valid set of users in Postgres.
 4. Returns the username and password as a response to the client.
 5. Sets a TTL, on expiry of which it removes the corresponding username and password from active Postgres users.
+
+
+curl --location 'http://98.84.123.161:8200/v1/database/creds/app-role' \
+--header 'X-Vault-Token: iXKDQd2N1D'
+
+{
+"request_id": "f97db4d5-0781-7aea-7d02-bc897dd41be1",
+"lease_id": "database/creds/app-role/aki3Ts36VeCawmIa7x9bDhbs",
+"renewable": true,
+"lease_duration": 60,
+"data": {
+"password": "SnLuGIHyz-chiEyypQM7",
+"username": "v-token-app-role-oAJrl3rotx6gzqORQ7LJ-1734442960"
+},
+"wrap_info": null,
+"warnings": null,
+"auth": null
+}
