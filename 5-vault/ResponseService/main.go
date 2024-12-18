@@ -33,7 +33,7 @@ func responseHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 	// register your progress in leadership board
-	err = registerProgress("consul")
+	err = registerProgress("vault")
 	if err != nil {
 		// set http status code to 500
 		http.Error(w, fmt.Sprintf("Failed to register progress %v", err), http.StatusInternalServerError)
