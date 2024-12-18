@@ -65,6 +65,8 @@ This part introduces HVS for storing and retrieving static secrets.
  
    **Create a secret in HVS**
    ```bash
+   hcp auth login
+   hcp profile init --vault-secrets
    hcp vault-secrets apps create minion-app
    echo 'is bruce wayne' >> secret
    hcp vault-secrets secrets create batman --app=minion-app --data-file=- < secret
