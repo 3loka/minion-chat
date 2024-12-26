@@ -1,5 +1,5 @@
 
-# Part 3: Boundary Integration
+# Part 10: Boundary Integration
 
 ## Background
 Our Hello app is already running with Consul, Nomad and Vault.
