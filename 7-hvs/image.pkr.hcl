@@ -77,7 +77,7 @@ build {
   }
 
   provisioner "shell" {
-    environment_vars = ["CLOUD_ENV=aws", "DOCKERHUB_ID=${var.dockerhub_id}"],
+    environment_vars = ["CLOUD_ENV=aws", "DOCKERHUB_ID=${var.dockerhub_id}"]
     script           = "./shared/scripts/setup.sh"
   }
 }

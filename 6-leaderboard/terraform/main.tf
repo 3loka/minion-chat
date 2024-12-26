@@ -172,7 +172,7 @@ resource "tls_private_key" "pk" {
 }
 
 resource "aws_key_pair" "leaderboard-key" {
-  key_name   = "leaderboard-key"
+  key_name   = "minion-key-leaderboard"
   public_key = tls_private_key.pk.public_key_openssh
 }
 

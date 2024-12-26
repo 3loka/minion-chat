@@ -83,7 +83,7 @@ Prometheus scrapes metrics from the following targets:
 - **response-service**: `response-service.service.consul:6060`
 
 The Prometheus config is defined in `prometheus.yml`. To view the metrics:
-- Open **Prometheus** at: `http://<nomad-server-ip>:9090`.
+- Open **Prometheus** at: `http://<nomad-client-ip>:9090`.
 - Explore the available targets under **Status > Targets**.
 
 ---
@@ -92,7 +92,7 @@ The Prometheus config is defined in `prometheus.yml`. To view the metrics:
 
 Let’s make those metrics beautiful! 🎨
 
-1. Open **Grafana** at: `http://<nomad-server-ip>:3000`.
+1. Open **Grafana** at: `http://<nomad-client-ip>:3000`.
 2. Import pre-built dashboards:
     - Go to **Dashboards > Import**.
     - Upload the JSON files from the `grafana-dashboards` folder.
@@ -106,7 +106,7 @@ Now let’s configure alerting rules to notify us when something goes wrong.
 
 Alertmanager is already provisioned to handle alerts from Prometheus and send them to a webhook.
 
-You can access **Alertmanager UI** at: `http://<nomad-server-ip>:9093`
+You can access **Alertmanager UI** at: `http://<nomad-client-ip>:9093`
 
 Here’s an example alert rule:
 - **Alert**: `InstanceDown`
