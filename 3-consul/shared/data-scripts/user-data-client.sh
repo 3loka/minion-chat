@@ -21,7 +21,7 @@ if [ "${application_name}" = "hello-service" ]; then
   sudo docker run -d --name ${application_name} --network=host ${dockerhub_id}/helloservice:latest
 elif [ "${application_name}" = "response-service" ]; then
   sudo docker image pull ${dockerhub_id}/responseservice:latest
-  sudo docker run -d --name ${application_name} --network=host ${dockerhub_id}/responseservice:latest
+  sudo docker run -d --name ${application_name} -e TF_VAR_dockerhub_id=${dockerhub_id} --network=host ${dockerhub_id}/responseservice:latest
 else
   echo "Unknown application name: ${application_name}"
 fi
