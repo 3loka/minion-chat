@@ -230,7 +230,7 @@ resource "tls_private_key" "pk" {
 }
 
 resource "aws_key_pair" "minion-key" {
-  key_name   = "minion-key"
+  key_name   = "minion-key-boundary"
   public_key = tls_private_key.pk.public_key_openssh
 }
 
