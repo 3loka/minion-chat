@@ -1,0 +1,5 @@
+services:  
+  response-service:
+    image: ${TF_VAR_dockerhub_id}/responseservice:latest
+    container_name: responseservice
+    build: ./ResponseService
