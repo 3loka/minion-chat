@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -84,7 +83,7 @@ func getInstaceID() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	id, err := ioutil.ReadAll(resp.Body)
+	id, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalf("Failed to read response body for instance ID: %v", err)
 		return "", err
@@ -103,7 +102,7 @@ func getPrivateIPAddress() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	ip, err := ioutil.ReadAll(resp.Body)
+	ip, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalf("Failed to read response body for private IP address: %v", err)
 		return "", err

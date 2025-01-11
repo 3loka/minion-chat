@@ -179,7 +179,7 @@ Advance feature(Not in scope):
 
       Run
       ```bash
-      sudo docker pause response-service
+      docker pause response-service
       ```
 
 
@@ -204,7 +204,7 @@ Advance feature(Not in scope):
 
       Restore the service
       ```bash
-      sudo docker unpause response-service
+      docker unpause response-service
       ```
       
 12. **DIY**:
