@@ -17,7 +17,7 @@ Our Hello app is already running with following limitations
 We will be targetting to solve the problem of unreliable infra by deploying this app in AWS cloud.
 
 The other big Challenge with using cloud is Infrastructure Management.
-#### List if infrastructure items
+#### List of infrastructure items
 - Auto selecting the latest ubuntu image.
 - Creating Security Group with ingress and egress defined.
 - 2 AWS Instance to host the application with docker installed
@@ -112,9 +112,8 @@ DOCKER_DEFAULT_PLATFORM=linux/amd64  docker-compose push
 Run in new terminal
 ```bash
 ssh -i "minion-key.pem" ubuntu@$RESPONSE_SERVICE
-sudo su
 docker run -d --name 'response_service' -p 6060:6060 -e TF_VAR_dockerhub_id=${TF_VAR_dockerhub_id} ${TF_VAR_dockerhub_id}/responseservice:latest
-sudo docker logs response_service
+docker logs response_service
 # Listening on port 6060...
 
 exit
@@ -125,9 +124,8 @@ exit
 Run in new terminal
 ```bash
 ssh -i "minion-key.pem" ubuntu@$HELLO_SERVICE
-sudo su
 docker run -d --name 'hello_service' -p 5050:5050 ${TF_VAR_dockerhub_id}/helloservice:latest
-sudo docker logs helloservice
+docker logs hello_service
 # Listening on port 5050...
 
 exit
@@ -168,8 +166,8 @@ Expected Output:
 ---
 
 ## Take aways?
-  • Cloud provides reliable insfrastructure
-  • Complex infra can be easily managed using Terraform
+- Cloud provides reliable insfrastructure
+- Complex infra can be easily managed using Terraform
 
 
 ## Limitations

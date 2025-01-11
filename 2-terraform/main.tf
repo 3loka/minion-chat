@@ -72,11 +72,12 @@ resource "aws_instance" "hello_service" {
 
     systemctl start docker
 
+    # Add the ubuntu user to the docker group to run docker commands without sudo
+    usermod -aG docker ubuntu
+
     # Set the environment variable globally
     echo "export TF_VAR_dockerhub_id=${var.dockerhub_id}" >> /etc/environment
     echo "export TF_VAR_dockerhub_id=${var.dockerhub_id}" | sudo tee --append /home/ubuntu/.bashrc
-
-    # docker run -d --name 'hello_service' -p 5050:5050 -e RESPONSE_SERVICE_HOST=${aws_instance.response_service.public_ip} ${var.dockerhub_id}/helloservice:latest
   EOF
 
   tags = merge(
@@ -99,12 +100,14 @@ resource "aws_instance" "response_service" {
     apt-get update -y
     apt-get install -y docker.io
 
+    systemctl start docker
+    
+    # Add the ubuntu user to the docker group to run docker commands without sudo
+    usermod -aG docker ubuntu
+
     # Set the environment variable globally
     echo "export TF_VAR_dockerhub_id=${var.dockerhub_id}" >> /etc/environment
     echo "export TF_VAR_dockerhub_id=${var.dockerhub_id}" | sudo tee --append /home/ubuntu/.bashrc
-
-    systemctl start docker
-    # docker run -d --name 'response_service' -p 6060:6060 ${var.dockerhub_id}/responseservice:latest
   EOF
 
   tags = merge(
