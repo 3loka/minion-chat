@@ -35,12 +35,17 @@ func responseHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 
-	// register your progress in leadership board
-	err = registerProgress("consul")
-	if err != nil {
-		// set http status code to 500
-		http.Error(w, fmt.Sprintf("Failed to register progress %v", err), http.StatusInternalServerError)
-		return
+	// Check if PROGRESS_API_URL is set and resembles a URL
+	progressAPIURL := os.Getenv("PROGRESS_API_URL")
+	if progressAPIURL != "" {
+		err = registerProgress("consul")
+		if err != nil {
+			// set http status code to 500
+			http.Error(w, fmt.Sprintf("Failed to register progress %v", err), http.StatusInternalServerError)
+			return
+		}
+	} else {
+		log.Printf("PROGRESS_API_URL is not set. Skipping progress registration.")
 	}
 }
 
@@ -150,8 +155,12 @@ func registerService(service string, port int, healthEp string) {
 
 // Register progress in leadership board
 func registerProgress(game string) error {
-	// register progress in leadership board
-	url := "http://leaderboard.ashesh-vidyut.sbx.hashidemos.io/api/"
+	// Get the URL from the environment variable PROGRESS_API_URL
+	url := os.Getenv("PROGRESS_API_URL")
+	if !(strings.HasPrefix(url, "http") || strings.HasPrefix(url, "https")) {
+		return fmt.Errorf("PROGRESS_API_URL is not a valid http/https URL")
+	}
+
 	// make a post call with header
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
